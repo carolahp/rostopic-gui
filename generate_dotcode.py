@@ -1,19 +1,20 @@
 import sys
 
 import rosgraph
+from rosgraph.impl import graph
 
 import pydot
 import pygraphviz
 
-sys.path.append(
-        '/home/fmontoto/rqt_common_plugins/rqt_graph/src/rqt_graph')
-
-import dotcode
+def escape_text(text):
+    return text
+    #return text.replace('/', '_').replace('%', '_').replace('-', '_')
 
 class Node(object):
-    def __init(self, incoming=None, outgoing=None, edges=None):
+    def __init__(self, name, incoming=None, outgoing=None, edges=None):
+        self.name = name
         self.incoming = incoming or set()
-        self.outgoing = outgoing or set()
+        self.outgoing = set()
         self.edges = edges or set()
 
     def add_incoming(self, item):
@@ -25,10 +26,16 @@ class Node(object):
 # Idea taken from PydotFactory
 class GraphWrapper(object):
     def __init__(self, graphname='graphname', graph_type='digraph', rank='same',
-                 simplify=True, rankdir='TB', ranksep=0.2, compound=True):
+                 simplify=True, rankdir='LR', ranksep=0.2, compound=True,
+                 graph=None):
+        self.subgraphs = dict()
+        if graph:
+            self.graph = graph
+            return
 
-        self.graph = pydot.Dot(graphname, graph_type=graph_type, rank=rank,
-                rankdir=rankdir, simplify=simplify)
+        self.graph = pydot.Dot(escape_text(graphname), graph_type=graph_type,
+                               rank=rank, rankdir=rankdir, simplify=simplify,
+                               compound=compound, ratio='fill')
         self.graph.set_ranksep(ranksep)
         self.graph.set_compound(compound)
 
@@ -46,20 +53,22 @@ class GraphWrapper(object):
         if shape:
             item.set_shape(shape)
 
-    def add_node(self, nodename, nodelabel=None, shape='box', color=None,
+    def add_node(self, nodename, nodelabel=None, shape='circle', color=None,
                  url=None):
         if not nodename:
             raise ValueError("Empty nodename")
         #TODO we might want to escape some characters. See pydot
-        node = pydot.Node(nodename)
-        _customize_item(node, label=nodelabel, shape=shape, color=color,
-                        url=url)
+        node = pydot.Node(escape_text(nodename))
+        self._customize_item(node, label=nodelabel, shape=shape, color=color,
+                             url=url)
         self.graph.add_node(node)
 
     def add_edge(self, nodename1, nodename2, label=None, simplify=True,
                  style=None, penwidth=1, url=None, color=None):
+        if label:
+            label = escape_text(label)
         edge = pydot.Edge(nodename1, nodename2)
-        _customize_item(edge, label=label, style=style, url=url)
+        self._customize_item(edge, label=None, style=style, url=url)
         edge.obj_dict['attributes']['penwidth'] = str(penwidth)
         if color:
             edge.obj_dict['attributes']['colorR'] = str(color[0])
@@ -67,12 +76,41 @@ class GraphWrapper(object):
             edge.obj_dict['attributes']['colorB'] = str(color[2])
         self.graph.add_edge(edge)
 
+    def add_cluster(self, name, label=None, rank='same', rankdir='TB',
+                    simplify=True, color=None, shape='circle', compound=True,
+                    style='bold', ranksep=0.2, orientation='portrait'):
+
+        name = escape_text(name)
+        c = pydot.Cluster(escape_text(name), rank=rank, rankdir=rankdir,
+                          simplify=simplify)
+        if 'set_shape' in c.__dict__:
+            c.set_shape(shape)
+        if 'set_style' in c.__dict__:
+            c.set_style(style)
+        if 'set_color' in c.__dict__:
+            c.set_color(color)
+        c.set_compound(compound)
+        c.set_ranksep(ranksep)
+        c.set_label(label or name)
+        self.graph.add_subgraph(c)
+        self.subgraphs[name] = GraphWrapper(graph=c)
+        #print(c.get_name())
+        return self.subgraphs[name]
+
+    def get_cluster(self, name):
+        return self.subgraphs[escape_text(name)]
+
+    def generate_dot(self):
+        self.graph.write_png("test.png")
+        self.graph.write_dot("test.dot")
+        self.graph.write_svg("test.svg")
+        return self.graph
+
 class MyException(Exception):
     pass
 
 class Generator(object):
     def __init__(self):
-        self.dotcode_gen = dotcode.RosGraphDotcodeGenerator()
         self.master = rosgraph.Master('/rostopic')
 
     def _check_master(self):
@@ -82,20 +120,54 @@ class Generator(object):
             raise MyException("Master not available")
 
     def _generate_graph(self, nodes_include=None, nodes_exclude=None,
-                        topics_include, topics_exclude):
-        nn_nodes = {n for n in self._graph.nn_nodes}
-        topics = {n for n in self._graph.nt_nodes}
+                        topics_include=None, topics_exclude=None):
+        nn_nodes = {n.strip() for n in self._graph.nn_nodes}
+        topics = {n.strip() for n in self._graph.nt_nodes}
 
         edges = {e for e in self._graph.nt_all_edges}
 
-        graph = {}
+        graph_dict = {}
         for e in edges:
-            if e.start not in graph:
-                graph[e.start] = Node()
-            if e.end not in graph:
-                graph[e.end] = Node()
-            graph[e.start].add_outgoing(e)
-            graph[e.end].add_incoming(e)
+            start = e.start.strip()
+            end = e.end.strip()
+            if start not in graph_dict:
+                graph_dict[start] = Node(start)
+            if end not in graph_dict:
+                graph_dict[end] = Node(end)
+            graph_dict[start].add_outgoing(e)
+            graph_dict[end].add_incoming(e)
+
+        graph = GraphWrapper()
+        for node in nn_nodes:
+            graph.add_node(node, shape='box')
+        #Clustering
+        last_namespace = ""
+        namespaces = set()
+        str_edges = [e.split('/')[1:] for e in sorted(topics)]
+        for spl in str_edges:
+            if spl[0] == last_namespace:
+                namespaces.add(last_namespace)
+            last_namespace = spl[0]
+
+        for n in namespaces:
+            graph.add_cluster(n)
+
+        for topic in topics:
+            try:
+                nspace = topic.strip()[1:topic.index('/', 1)]
+            except ValueError:
+                nspace = topic.strip()[1:]
+            if nspace in namespaces:
+                graph.get_cluster(nspace).add_node(topic, shape='diamond')
+            else:
+                graph.add_node(topic, shape='diamond')
+
+        for e in edges:
+            #pass
+            graph.add_edge(e.start.strip(), e.end.strip(), label=str(e))
+        dot = graph.generate_dot()
+        #print(dot.to_string())
+
 
 
 
@@ -111,6 +183,7 @@ class Generator(object):
         self._graph.set_master_stale(5.0)
         self._graph.set_node_stale(5.0)
         self._graph.update()
+        """
         print("Nodes")
         print(self._graph.nn_nodes)
         print("TopicNodes")
@@ -131,7 +204,9 @@ class Generator(object):
         print(self._graph.nt_all_edges)
         for n in self._graph.nt_all_edges:
             print(n)
-        print(self.dotcode_gen.generate_dotcode())
+        """
+        self._generate_graph()
+        #print(self.dotcode_gen.generate_dotcode())
 
 def main():
     g = Generator()
