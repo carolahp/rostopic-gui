@@ -12,7 +12,8 @@ last modified: December 2010
 website: www.zetcode.com
 """
 
-from Tkinter import Tk, W, E
+from Tkinter import Tk, W, E, Canvas
+from Tkinter import *
 from ttk import Button, Label, Style, Checkbutton, Treeview
 from ttk import Frame, PanedWindow
 from ttk import Entry
@@ -25,10 +26,9 @@ class Example(Frame):
         # Frames        
         self.top_frame = Frame(self)
 
-        self.central_frame = PanedWindow(self)
+        self.central_frame = Frame(self)
 
-        self.left_frame = Frame(self)
-        self.right_frame = Frame(self)
+        self.bottom_frame = Frame(self)
 
         self.parent = parent        
         self.init_ui()
@@ -42,19 +42,15 @@ class Example(Frame):
         cb = Checkbutton(self.top_frame, text="publishers")
 
         # Main 
-        self.init_frame_ui(self, 2, 1, 3)
+        self.init_frame_ui(self, 3, 1, 3)
         # Top
         self.init_frame_ui(self.top_frame, 1, 3, 3)
-        # Left
-        self.init_frame_ui(self.left_frame, 3, 1, 3)
-        # Right
-        self.init_frame_ui(self.right_frame, 4, 1, 3)
+        # Bottom
+        self.init_frame_ui(self.bottom_frame, 4, 1, 3)
         
         self.top_frame.grid(row=0, column=0)
-        self.central_frame.grid(row=1, column=0)
-        self.central_frame.add(self.left_frame)
-        self.central_frame.add(self.right_frame)
-        
+        self.central_frame.grid(row=1, column=0, sticky="e")
+        self.bottom_frame.grid(row=2, column=0)
         
         # Top content
         cb = Checkbutton(self.top_frame, text="publishers")
@@ -63,14 +59,20 @@ class Example(Frame):
         cb.grid(row=0, column=1)
         
         # Left content
-        e_search = Entry(self.left_frame)
-        e_search.grid(row=0, column=0)
-        tv = self.create_topics_list(self.left_frame)
-        tv.grid(row=1, column=0)
+        w = Canvas(self.central_frame, bg='#FFFFFF', width=300,
+                   height=300, scrollregion=(0,0,500,500))   
+        hbar = Scrollbar(self.central_frame, orient=HORIZONTAL)
+        hbar.pack(side=BOTTOM, fill=X)
+        hbar.config(command=w.xview)     
+        w.config(width=300, height=300)
+        w.config(xscrollcommand=hbar.set)
+        w.pack(side=LEFT, expand=True, fill=BOTH)
 
-        # Right content
-        topic_title = Label(self.right_frame, text="Hello Caro")
-        topic_title.grid(row=0, column=0)
+        w.create_line(0, 0, 200, 100)
+        w.create_line(0, 100, 200, 0, fill="red", dash=(4, 4))
+
+        w.create_rectangle(50, 25, 150, 75, fill="blue")
+
         
 
         
