@@ -25,6 +25,11 @@ def main():
         for child in e:
             if child.tag.rstrip('\n').rstrip('\r').endswith("}polygon"):
                 child.attrib["stroke"] = "red"
+                child.attrib["fill"] = "red"
+                child.attrib["stroke-width"] = "6"
+            elif child.tag.rstrip('\n').rstrip('\r').endswith("}path"):
+                child.attrib["stroke"] = "red"
+                child.attrib["stroke-width"] = "6"
     xml.write("caro.svg")
 
 if __name__ == "__main__":
