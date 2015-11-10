@@ -22,7 +22,7 @@ class UrlInput(QLineEdit):
         self.timer = QTimer()
         self.browser.connect(self.timer, QtCore.SIGNAL('timeout()'), self._auto_load)
         
-        self.timer.setInterval(1000)
+        self.timer.setInterval(100)
         self.timer.start()
         self._auto_load()
 

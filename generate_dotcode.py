@@ -100,6 +100,7 @@ class GraphWrapper(object):
         return self.subgraphs[escape_text(name)]
 
     def generate_dot(self):
+	print(dir(self.graph))
         self.graph.write_png("test.png")
         self.graph.write_dot("test.dot")
         self.graph.write_svg("test.svg")
