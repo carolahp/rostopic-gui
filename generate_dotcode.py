@@ -100,7 +100,6 @@ class GraphWrapper(object):
         return self.subgraphs[escape_text(name)]
 
     def generate_dot(self):
-	print(dir(self.graph))
         self.graph.write_png("test.png")
         self.graph.write_dot("test.dot")
         self.graph.write_svg("test.svg")
@@ -120,7 +119,8 @@ class Generator(object):
             raise MyException("Master not available")
 
     def _generate_graph(self, nodes_include=None, nodes_exclude=None,
-                        topics_include=None, topics_exclude=None):
+                        topics_include=None, topics_exclude=None,
+                        hide_dead_sinks=True):
         nn_nodes = {n.strip() for n in self._graph.nn_nodes}
         topics = {n.strip() for n in self._graph.nt_nodes}
 
@@ -140,10 +140,18 @@ class Generator(object):
         graph = GraphWrapper()
         for node in nn_nodes:
             graph.add_node(node, shape='box')
+
+        if hide_dead_sinks:
+            filtered_topics = [e for e in topics
+                                        if e in graph_dict and
+                                           len(graph_dict[e].outgoing) > 0]
+        else:
+            filtered_topics = topics
+
         #Clustering
         last_namespace = ""
         namespaces = set()
-        str_edges = [e.split('/')[1:] for e in sorted(topics)]
+        str_edges = [e.split('/')[1:] for e in sorted(filtered_topics)]
         for spl in str_edges:
             if spl[0] == last_namespace:
                 namespaces.add(last_namespace)
@@ -152,7 +160,7 @@ class Generator(object):
         for n in namespaces:
             graph.add_cluster(n)
 
-        for topic in topics:
+        for topic in filtered_topics:
             try:
                 nspace = topic.strip()[1:topic.index('/', 1)]
             except ValueError:
@@ -163,50 +171,18 @@ class Generator(object):
                 graph.add_node(topic, shape='diamond')
 
         for e in edges:
-            #pass
+            if (e.start.strip() not in filtered_topics and
+                e.end.strip() not in filtered_topics):
+                continue
             graph.add_edge(e.start.strip(), e.end.strip(), label=str(e))
         dot = graph.generate_dot()
-        #print(dot.to_string())
-
-
-
-
-
-
-
-
-
-
 
     def generate(self):
         self._graph = rosgraph.impl.graph.Graph()
         self._graph.set_master_stale(5.0)
         self._graph.set_node_stale(5.0)
         self._graph.update()
-        """
-        print("Nodes")
-        print(self._graph.nn_nodes)
-        print("TopicNodes")
-        print(self._graph.nt_nodes)
-        print("Node to node")
-        print(self._graph.nn_edges)
-        for n in self._graph.nn_edges:
-            #print(n.start)
-            #print(n.label)
-            #print(n.end)
-            #print(n.key)
-            print(n)
-        print("Node to topic")
-        print(self._graph.nt_edges)
-        for n in self._graph.nt_edges:
-            print(n)
-        print("All Node to topic")
-        print(self._graph.nt_all_edges)
-        for n in self._graph.nt_all_edges:
-            print(n)
-        """
         self._generate_graph()
-        #print(self.dotcode_gen.generate_dotcode())
 
 def main():
     g = Generator()
