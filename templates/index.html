@@ -6,4 +6,5 @@
   <h1>Hello World!</h1>
 {% endif %}
 
+<script src="{{ url_for('static', filename='js/jquery-2.1.4.min.js', _external=True) }}"></script>
 <object id="circle-svg" width="400" height="300" type="image/svg+xml" data='{{ url_for('static', filename='graphs' , _external=True )}}/{{ svg_filename }}'></object>
