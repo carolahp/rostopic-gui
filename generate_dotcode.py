@@ -1,9 +1,14 @@
+import socket
 import sys
 
 import rosgraph
 from rosgraph.impl import graph
 
 import pydot
+
+class UnreachableRos(Exception):
+    """Raised when ROS not reachable."""
+    pass
 
 def escape_text(text):
     return text
@@ -179,7 +184,11 @@ class Generator(object):
         self._graph = rosgraph.impl.graph.Graph()
         self._graph.set_master_stale(5.0)
         self._graph.set_node_stale(5.0)
-        self._graph.update()
+        try:
+            self._graph.update()
+        except socket.error:
+            print(UnreachableRos)
+            raise UnreachableRos("Ros not reachable")
         self._generate_graph(path)
 
 def main():

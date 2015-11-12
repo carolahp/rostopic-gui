@@ -1,9 +1,10 @@
-from generate_dotcode import Generator
+import generate_dotcode
 import os.path
 
 from flask import Flask
 from flask import render_template, send_from_directory
 import time
+import logging
 
 app = Flask(__name__)
 app.debug = True
@@ -12,7 +13,7 @@ LAST_SVG_TS = 0
 TIME_TO_REFRESH_SVG = 5 #Segs
 
 def _write_svg(path):
-    g = Generator()
+    g = generate_dotcode.Generator()
     g.generate(path)
 
 def _get_current_svg():
@@ -33,9 +34,11 @@ def hello_world():
 
 @app.route('/svg')
 def svg():
-    svg_path = _get_current_svg()
-    print(svg_path)
-    return render_template('index.html', name='caro', svg_filename=svg_path, svg="qwe", path="asd")
+    try:
+        svg_path = _get_current_svg()
+    except generate_dotcode.UnreachableRos:
+        return "Unable to reach ROS, is it running?"
+    return render_template('index.html', name='caro', svg_filename=svg_path)
 
 if __name__ == '__main__':
     app.run()
