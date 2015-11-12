@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+  <head>
+    <title>Controlling an SVG with Javascript</title>
+    <!--<script type='text/javascript' src='svg-interaction.js'></script>-->
+    <script type='text/javascript'>
+    
+    function cambiar(){
+        
+	    var a = document.getElementById("circle-svg");
+	    var svgDoc = a.contentDocument;
+	    var svgItem = svgDoc.getElementById("my-circle");
+        alert(svgItem);	    
+svgItem.setAttribute("fill", "green");
+        
+        }
+  </script>
+  <head>
+
+  <body>
+    <h2>Controlling SVG with Javascript</h2>
+    <div class="page-content">
+      <div><object class="svgClass" id="circle-svg" width="400" height="300" type="image/svg+xml" data='{{ url_for('static', filename='graphs' , _external=True )}}/{{ svg_filename }}'></object></div>
+      <div>X: <input id="sliderX" type="range" min="1" max="80" value="20" onchange="moveSlider(this, 'x')"/></div>
+      <div>Y: <input id="sliderY" type="range" min="1" max="60" value="20" onchange="moveSlider(this, 'y')"/></div>
+    </div>
+    <button onclick="javascript:cambiar();">Click to change to yellow</button>
+
+
+  </body>
+</html>
