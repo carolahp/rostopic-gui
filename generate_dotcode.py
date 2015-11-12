@@ -99,11 +99,8 @@ class GraphWrapper(object):
     def get_cluster(self, name):
         return self.subgraphs[escape_text(name)]
 
-    def generate_dot(self):
-	print(dir(self.graph))
-        self.graph.write_png("test.png")
-        self.graph.write_dot("test.dot")
-        self.graph.write_svg("test.svg")
+    def generate_dot(self, path):
+        self.graph.write_svg(path)
         return self.graph
 
 class MyException(Exception):
@@ -119,7 +116,7 @@ class Generator(object):
         except socket.error:
             raise MyException("Master not available")
 
-    def _generate_graph(self, nodes_include=None, nodes_exclude=None,
+    def _generate_graph(self, path, nodes_include=None, nodes_exclude=None,
                         topics_include=None, topics_exclude=None,
                         hide_dead_sinks=True):
         nn_nodes = {n.strip() for n in self._graph.nn_nodes}
@@ -176,14 +173,14 @@ class Generator(object):
                 e.end.strip() not in filtered_topics):
                 continue
             graph.add_edge(e.start.strip(), e.end.strip(), label=str(e))
-        dot = graph.generate_dot()
+        dot = graph.generate_dot(path)
 
-    def generate(self):
+    def generate(self, path):
         self._graph = rosgraph.impl.graph.Graph()
         self._graph.set_master_stale(5.0)
         self._graph.set_node_stale(5.0)
         self._graph.update()
-        self._generate_graph()
+        self._generate_graph(path)
 
 def main():
     g = Generator()

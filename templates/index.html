@@ -6,4 +6,4 @@
   <h1>Hello World!</h1>
 {% endif %}
 
-<object id="circle-svg" width="400" height="300" type="image/svg+xml" data='{{ url_for('static',filename='sample.svg' , _external=True )}}'></object>
+<object id="circle-svg" width="400" height="300" type="image/svg+xml" data='{{ url_for('static', filename='graphs' , _external=True )}}/{{ svg_filename }}'></object>
