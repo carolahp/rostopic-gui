@@ -2,7 +2,8 @@ import generate_dotcode
 import os.path
 
 from flask import Flask
-from flask import render_template, send_from_directory
+from flask import render_template, request, send_from_directory
+from flask import jsonify, make_response
 import logging
 
 app = Flask(__name__)
@@ -20,14 +21,22 @@ def svg():
     try:
         svg_path = SVG_GENERATOR.get_current_svg('static/graphs')
     except generate_dotcode.UnreachableRos:
-        return "Unable to reach ROS, is it running?"
+        return make_response(
+                jsonify({"error" : "Unable to reach ROS, is it running?"}), 401)
     return render_template('index.html', name='caro',
                            svg_filename=os.path.basename(svg_path))
 
 #API
 @app.route('/get_msg_type')
 def get_msg_type():
-    return 'odom/vel'
+    try:
+        topic = request.args['topic']
+    except KeyError as e:
+        logging.exception(e)
+        return make_response(jsonify(
+                {"error": "You must specify a topic to get the msg type."}),
+                400)
+    return jsonify({'msg_type': 'odom/vel', 'topic':topic})
 
 if __name__ == '__main__':
     app.run()
