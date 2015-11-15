@@ -1,10 +1,14 @@
+import os
+import pydot
 import socket
 import sys
+import time
 
 import rosgraph
 from rosgraph.impl import graph
 
-import pydot
+
+import rwlock
 
 class UnreachableRos(Exception):
     """Raised when ROS not reachable."""
@@ -113,6 +117,9 @@ class MyException(Exception):
 
 class Generator(object):
     def __init__(self):
+        self.last_svg_generated = None
+        self.last_svg_generated_ts = 0
+        self.rwlock = rwlock.RWLock()
         self.master = rosgraph.Master('/rostopic')
 
     def _check_master(self):
@@ -190,6 +197,23 @@ class Generator(object):
             print(UnreachableRos)
             raise UnreachableRos("Ros not reachable")
         self._generate_graph(path)
+
+    def get_current_svg(self, prefix="", file_name=None,
+                        max_time_to_refresh=5):
+        #TODO when do we remove old files ?
+        with rwlock.read_lock(self.rwlock):
+            now = time.time()
+            name = file_name if file_name else "%s.svg" % now
+            path = os.path.join(prefix, name)
+
+            if now - self.last_svg_generated_ts > max_time_to_refresh:
+                self.rwlock.promote()
+                self.generate(path)
+                self.last_svg_generated = path
+                self.last_svg_generated_ts = now
+
+            return self.last_svg_generated
+
 
 def main():
     g = Generator()
