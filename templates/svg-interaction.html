@@ -39,29 +39,37 @@
 						var childCopy = edgeElems[j];
 						var edgeElemsCopy = edgeElems;
 						var topicNameCopy = topicName;	
-						/* function that changes arrow color */
-						var colorStroke1 = function(color) {
-							for(var k = 0; k < edgeElemsCopy.length; k++){ 
-								var childCp = edgeElemsCopy[k];
-								childCp.setAttribute("stroke", color) 
-								if(childCp.tagName == "polygon")
-									childCp.setAttribute("fill", color) 								
-							}
-						}
+						/* function that changes the arrow color */
+						var colorStrokeFun = generateStrokeFun(edgeElemsCopy)
 						/* add events listeners */
-						childCopy.addEventListener('click', function(event) { $.getJSON('/get_msg_type', {
-																				  topic: topicNameCopy
-																				}, function(data) {
-																				  $('#topic_msg_type').html('Topico: ' + data.topic + '<br>Tipo: ' + data.msg_type);
-																				});});
-						childCopy.addEventListener('mouseover', function (event) { colorStroke1("red")});
-						childCopy.addEventListener('mouseout', function (event) { colorStroke1("black")});
+						addListenersToElement(childCopy, topicNameCopy, colorStrokeFun)
 					}
 					colorStroke();
 				}
 			}
 		}
     }
+
+	function addListenersToElement(element, topicName, colorStrokeFun) {
+		element.addEventListener('click', function(event) { $.getJSON('/get_msg_type', {
+														  topic: topicName
+														}, function(data) {
+														  $('#topic_msg_type').html('Topico: ' + data.topic + '<br>Tipo: ' + data.msg_type);
+														});});
+		element.addEventListener('mouseover', function (event) { colorStrokeFun("red")});
+		element.addEventListener('mouseout', function (event) { colorStrokeFun("black")});
+	}
+
+	function generateStrokeFun(edgeElems) {
+		return function(color) {
+				for(var k = 0; k < edgeElems.length; k++){ 
+					var childCp = edgeElems[k];
+					childCp.setAttribute("stroke", color); 
+					if(childCp.tagName == "polygon")
+						childCp.setAttribute("fill", color);								
+				}
+		}
+	}
 
   </script>
   <head>
