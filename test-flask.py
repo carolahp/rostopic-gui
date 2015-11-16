@@ -12,7 +12,6 @@ import logging
 import time
 
 app = Flask(__name__)
-app.debug = True
 
 SVG_GENERATOR = generate_dotcode.Generator()
 
@@ -65,4 +64,4 @@ def get_msg_type():
                     'query_topic':topic})
 
 if __name__ == '__main__':
-    app.run()
+    app.run("0.0.0.0")
