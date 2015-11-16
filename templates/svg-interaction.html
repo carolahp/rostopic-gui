@@ -68,11 +68,12 @@
 
   <body>
     <h2>ROS nodes and topics diagram</h2>
+    <button onclick="javascript:location.reload();">Reload</button>
     <div class="page-content">
-      <div><object class="svgClass" id="svg-container" width="400" height="300" type="image/svg+xml" data='{{ url_for('static', filename='graphs' , _external=True )}}/{{ svg_filename }}'></object></div>
-      <div id="topic_msg_type"></div>
+      <div><object class="svgClass" id="svg-container" width="400" height="300" type="image/svg+xml" data='{{ svg_filename }}'></object></div>
+      <div id="topic_msg_type">Topico:<br>Tipo:</div>
     </div>
-    <!--<button onclick="javascript:cambiar();">Click to change to yellow</button>-->
+
 
 
   </body>

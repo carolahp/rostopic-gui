@@ -5,9 +5,10 @@ from flask import Flask
 from flask import render_template, request, send_from_directory
 from flask import jsonify, make_response
 import logging
+import time
 
 app = Flask(__name__)
-app.debug = False
+app.debug = True
 
 SVG_GENERATOR = generate_dotcode.Generator()
 
@@ -29,7 +30,14 @@ def svg():
 
 @app.route('/interaction')
 def interaction():
-    svg_path = 'diagram.svg'
+    global SVG_GENERATOR
+    try:
+		file_name = "%s.svg" % time.time()
+		svg_path = SVG_GENERATOR.get_current_svg('static/graphs', file_name=file_name)
+    except generate_dotcode.UnreachableRos:
+        return make_response(
+                jsonify({"error" : "Unable to reach ROS, is it running?"}), 401)
+	
     return render_template('svg-interaction.html', svg_filename=svg_path)
 
 #API
