@@ -6,11 +6,11 @@
     <script type='text/javascript' src='../static/js/jquery-2.1.4.min.js'></script>
     <script type='text/javascript'>
 	window.onload = function(){
-		console.log("entre");		
+		console.log("entre");
 		addListeners();
 	};
-						
-    function addListeners(){        
+
+    function addListeners(){
 	    var a = document.getElementById("svg-container");
 	    var svgDoc = a.contentDocument;
 		var allElemsG = svgDoc.getElementsByTagName("g");
@@ -19,18 +19,18 @@
 			var elemG = allElemsG[i];
 			if(elemG.getAttribute("class") == "edge") {
 				var eGChildren = elemG.childNodes;
-				var edgeElems = [];	
+				var edgeElems = [];
 				var topicName = "";
-					
+
 				for(var j = 0; j < eGChildren.length; j++) {
 					var child = eGChildren[j];
 					/* get topic name */
 					if(child.tagName == "title") {
-						topicName = child.innerHTML.split('&gt;')[1];				
+						topicName = child.innerHTML.split('&gt;')[1];
 					}
 					/* save polygons and paths found inside G (arrow parts) */
 					if(child.tagName == "polygon" || child.tagName == "path") {
-						edgeElems.push(child);											
+						edgeElems.push(child);
 					}
 				}
 				/* iterate polygons and paths found in G */
@@ -38,7 +38,7 @@
 					var colorStroke = function() {
 						var childCopy = edgeElems[j];
 						var edgeElemsCopy = edgeElems;
-						var topicNameCopy = topicName;	
+						var topicNameCopy = topicName;
 						/* function that changes the arrow color */
 						var colorStrokeFun = generateStrokeFun(edgeElemsCopy)
 						/* add events listeners */
@@ -54,7 +54,7 @@
 		element.addEventListener('click', function(event) { $.getJSON('/get_msg_type', {
 														  topic: topicName
 														}, function(data) {
-														  $('#topic_msg_type').html('Topico: ' + data.topic + '<br>Tipo: ' + data.msg_type);
+														  $('#topic_msg_type').html('Topic: ' + data.real_topic + '<br>Type: ' + data.topic_type);
 														});});
 		element.addEventListener('mouseover', function (event) { colorStrokeFun("red")});
 		element.addEventListener('mouseout', function (event) { colorStrokeFun("black")});
@@ -62,11 +62,11 @@
 
 	function generateStrokeFun(edgeElems) {
 		return function(color) {
-				for(var k = 0; k < edgeElems.length; k++){ 
+				for(var k = 0; k < edgeElems.length; k++){
 					var childCp = edgeElems[k];
-					childCp.setAttribute("stroke", color); 
+					childCp.setAttribute("stroke", color);
 					if(childCp.tagName == "polygon")
-						childCp.setAttribute("fill", color);								
+						childCp.setAttribute("fill", color);
 				}
 		}
 	}
@@ -79,7 +79,7 @@
     <button onclick="javascript:location.reload();">Reload</button>
     <div class="page-content">
       <div><object class="svgClass" id="svg-container" width="400" height="300" type="image/svg+xml" data='{{ svg_filename }}'></object></div>
-      <div id="topic_msg_type">Topico:<br>Tipo:</div>
+      <div id="topic_msg_type">Topic:<br>Type:</div>
     </div>
 
 
