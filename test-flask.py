@@ -8,6 +8,8 @@ from flask import jsonify, make_response
 import generate_dotcode
 import rostopic_funcs
 
+import logging
+import time
 
 app = Flask(__name__)
 app.debug = True
@@ -28,6 +30,18 @@ def svg():
                 jsonify({"error" : "Unable to reach ROS, is it running?"}), 401)
     return render_template('index.html', name='caro',
                            svg_filename=os.path.basename(svg_path))
+
+
+@app.route('/interaction')
+def interaction():
+    global SVG_GENERATOR
+    try:
+	svg_path = SVG_GENERATOR.get_current_svg('static/graphs')
+    except generate_dotcode.UnreachableRos:
+        return make_response(
+                jsonify({"error" : "Unable to reach ROS, is it running?"}), 401)
+
+    return render_template('svg-interaction.html', svg_filename=svg_path)
 
 #API
 @app.route('/get_msg_type')
