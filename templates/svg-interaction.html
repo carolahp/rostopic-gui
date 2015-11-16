@@ -2,30 +2,77 @@
 <html lang="en">
 
   <head>
-    <title>Controlling an SVG with Javascript</title>
-    <!--<script type='text/javascript' src='svg-interaction.js'></script>-->
+    <title>ROS nodes and topics diagram</title>
+    <script type='text/javascript' src='../static/js/jquery-2.1.4.min.js'></script>
     <script type='text/javascript'>
-    
-    function cambiar(){
-        
-	    var a = document.getElementById("circle-svg");
+	window.onload = function(){
+		console.log("entre");		
+		addListeners();
+	};
+						
+    function addListeners(){        
+	    var a = document.getElementById("svg-container");
 	    var svgDoc = a.contentDocument;
-	    var svgItem = svgDoc.getElementById("my-circle");
-        alert(svgItem);	    
-svgItem.setAttribute("fill", "green");
-        
-        }
+		var allElemsG = svgDoc.getElementsByTagName("g");
+		/* iterate G elements */
+		for(var i = 0; i < allElemsG.length; i++)	{
+			var elemG = allElemsG[i];
+			if(elemG.getAttribute("class") == "edge") {
+				var eGChildren = elemG.childNodes;
+				var edgeElems = [];	
+				var topicName = "";
+					
+				for(var j = 0; j < eGChildren.length; j++) {
+					var child = eGChildren[j];
+					/* get topic name */
+					if(child.tagName == "title") {
+						topicName = child.innerHTML.split('&gt;')[1];				
+					}
+					/* save polygons and paths found inside G (arrow parts) */
+					if(child.tagName == "polygon" || child.tagName == "path") {
+						edgeElems.push(child);											
+					}
+				}
+				/* iterate polygons and paths found in G */
+				for(var j = 0; j < edgeElems.length; j++) {
+					var colorStroke = function() {
+						var childCopy = edgeElems[j];
+						var edgeElemsCopy = edgeElems;
+						var topicNameCopy = topicName;	
+						/* function that changes arrow color */
+						var colorStroke1 = function(color) {
+							for(var k = 0; k < edgeElemsCopy.length; k++){ 
+								var childCp = edgeElemsCopy[k];
+								childCp.setAttribute("stroke", color) 
+								if(childCp.tagName == "polygon")
+									childCp.setAttribute("fill", color) 								
+							}
+						}
+						/* add events listeners */
+						childCopy.addEventListener('click', function(event) { $.getJSON('/get_msg_type', {
+																				  topic: topicNameCopy
+																				}, function(data) {
+																				  $('#topic_msg_type').html('Topico: ' + data.topic + '<br>Tipo: ' + data.msg_type);
+																				});});
+						childCopy.addEventListener('mouseover', function (event) { colorStroke1("red")});
+						childCopy.addEventListener('mouseout', function (event) { colorStroke1("black")});
+					}
+					colorStroke();
+				}
+			}
+		}
+    }
+
   </script>
   <head>
 
   <body>
-    <h2>Controlling SVG with Javascript</h2>
+    <h2>ROS nodes and topics diagram</h2>
     <div class="page-content">
-      <div><object class="svgClass" id="circle-svg" width="400" height="300" type="image/svg+xml" data='{{ url_for('static', filename='graphs' , _external=True )}}/{{ svg_filename }}'></object></div>
-      <div>X: <input id="sliderX" type="range" min="1" max="80" value="20" onchange="moveSlider(this, 'x')"/></div>
-      <div>Y: <input id="sliderY" type="range" min="1" max="60" value="20" onchange="moveSlider(this, 'y')"/></div>
+      <div><object class="svgClass" id="svg-container" width="400" height="300" type="image/svg+xml" data='{{ url_for('static', filename='graphs' , _external=True )}}/{{ svg_filename }}'></object></div>
+      <div id="topic_msg_type"></div>
     </div>
-    <button onclick="javascript:cambiar();">Click to change to yellow</button>
+    <!--<button onclick="javascript:cambiar();">Click to change to yellow</button>-->
 
 
   </body>

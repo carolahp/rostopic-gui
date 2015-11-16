@@ -7,7 +7,7 @@ from flask import jsonify, make_response
 import logging
 
 app = Flask(__name__)
-app.debug = True
+app.debug = False
 
 SVG_GENERATOR = generate_dotcode.Generator()
 
@@ -25,6 +25,12 @@ def svg():
                 jsonify({"error" : "Unable to reach ROS, is it running?"}), 401)
     return render_template('index.html', name='caro',
                            svg_filename=os.path.basename(svg_path))
+
+
+@app.route('/interaction')
+def interaction():
+    svg_path = 'diagram.svg'
+    return render_template('svg-interaction.html', svg_filename=svg_path)
 
 #API
 @app.route('/get_msg_type')
