@@ -1,10 +1,13 @@
-import generate_dotcode
 import os.path
+import logging
 
 from flask import Flask
 from flask import render_template, request, send_from_directory
 from flask import jsonify, make_response
-import logging
+
+import generate_dotcode
+import rostopic_funcs
+
 
 app = Flask(__name__)
 app.debug = True
@@ -36,7 +39,16 @@ def get_msg_type():
         return make_response(jsonify(
                 {"error": "You must specify a topic to get the msg type."}),
                 400)
-    return jsonify({'msg_type': 'odom/vel', 'topic':topic})
+    try:
+        topic_type, msg_class, real_topic, msg_eval = (
+                rostopic_funcs.get_topic_info(topic))
+    except Exception as e:
+        logging.exception(e)
+        return make_response(jsonify({"error": "ERROR"}), 400)
+    return jsonify({'topic_type': topic_type,
+                    'real_topic': real_topic,
+                    'msg_eval': msg_eval,
+                    'query_topic':topic})
 
 if __name__ == '__main__':
     app.run()
