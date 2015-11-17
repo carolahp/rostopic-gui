@@ -42,6 +42,10 @@ def interaction():
 
     return render_template('svg-interaction.html', svg_filename=svg_path)
 
+@app.route('/mobile')
+def get_mobile():
+    return render_template('new_index.html')
+
 #API
 @app.route('/get_msg_type')
 def get_msg_type():
@@ -64,4 +68,5 @@ def get_msg_type():
                     'query_topic':topic})
 
 if __name__ == '__main__':
+    app.debug = True
     app.run("0.0.0.0")
