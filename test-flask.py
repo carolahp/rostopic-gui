@@ -62,10 +62,13 @@ def get_msg_type():
     except Exception as e:
         logging.exception(e)
         return make_response(jsonify({"error": "ERROR"}), 400)
+    msg_struct = rostopic_funcs.get_msg_struct(topic_type)
     return jsonify({'topic_type': topic_type,
                     'real_topic': real_topic,
                     'msg_eval': msg_eval,
+                    'msg_struct': msg_struct,
                     'query_topic':topic})
+
 
 if __name__ == '__main__':
     app.debug = True
