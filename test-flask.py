@@ -1,19 +1,30 @@
 import os.path
 import logging
+import threading
+import logging
+import time
 
 from flask import Flask
 from flask import render_template, request, send_from_directory
 from flask import jsonify, make_response
 
+from rqt_topic import topic_info
+
 import generate_dotcode
+import rospy
 import rostopic_funcs
 
-import logging
-import time
 
 app = Flask(__name__)
 
+NODE_NAME = 'webtopic'
+#rospy.init_node(NODE_NAME, anonymous=True, disable_signals=True)
+
 SVG_GENERATOR = generate_dotcode.Generator()
+SUBSCRIBED_TOPICS = {}
+SUBSCRIBED_TOPICS_LOCK = threading.Lock()
+
+#TODO make_response is not being used properly
 
 @app.route('/hello')
 def hello_world():
@@ -69,7 +80,65 @@ def get_msg_type():
                     'msg_struct': msg_struct,
                     'query_topic':topic})
 
+@app.route('/subscribe')
+def subscribe():
+    global SUBSCRIBED_TOPICS, SUBSCRIBED_TOPICS_LOCK
+    try:
+        topic = request.args['topic']
+    except KeyError as e:
+        logging.exception(e)
+        return make_response(jsonify(
+                {'error': 'You must specify a topic to subscribe to.'}), 400)
+    with SUBSCRIBED_TOPICS_LOCK:
+        if topic in SUBSCRIBED_TOPICS:
+            topic_obj = SUBSCRIBED_TOPICS[topic]
+            if not topic_obj.monitoring:
+                topic_obj.start_monitoring()
+            return make_response(jsonify({}))
+        try:
+            topic_type, _, topic_name, _ = rostopic_funcs.get_topic_info(topic)
+            if not topic_type or not topic_name:
+                return make_response(jsonify(
+                        {'error': 'Unable to subscribe to %s' % topic}), 400)
+            topic_obj = topic_info.TopicInfo(topic_name, topic_type)
+            #import pdb; pdb.set_trace()
+            topic_obj.start_monitoring()
+            SUBSCRIBED_TOPICS[topic] = topic_obj
+
+        except Exception as e:
+            logging.exception(e)
+            return make_response(jsonify({}), 500)
+        return make_response(jsonify({}))
+
+@app.route('/get_last_msg')
+def get_last_msg():
+    try:
+        topic = request.args['topic']
+    except KeyError as e:
+        logging.exception(e)
+        return make_response(jsonify(
+                {'error': ('You must specify a topic in '
+                           'order to get its last message.')}), 400)
+    try:
+        return make_response(jsonify(rostopic_funcs.parse_msg_as_dict(
+                SUBSCRIBED_TOPICS[topic].last_message)))
+    except AttributeError as e:
+        logging.exception(e)
+        return make_response(jsonify(
+                {'error': 'No message received yet.'}, 400))
+    except KeyError as e:
+        logging.exception(e)
+        return make_response(jsonify(
+                {'error': 'Not subscribed to this topic'}))
+    except Exception as e:
+        logging.exception(e)
+        return make_response(jsonify({}), 500)
+
 
 if __name__ == '__main__':
     app.debug = True
-    app.run("0.0.0.0")
+    try:
+        rospy.init_node(NODE_NAME, anonymous=True, disable_signals=True)
+        app.run("0.0.0.0", threaded=True)
+    finally:
+        rospy.signal_shutdown("shutting down")
