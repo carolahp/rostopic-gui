@@ -21,8 +21,11 @@ NODE_NAME = 'webtopic'
 #rospy.init_node(NODE_NAME, anonymous=True, disable_signals=True)
 
 SVG_GENERATOR = generate_dotcode.Generator()
-SUBSCRIBED_TOPICS = {}
+
+#TODO delete as soon as a mutex is implemented at InterProcessTopicsInfo
 SUBSCRIBED_TOPICS_LOCK = threading.Lock()
+TOPICS_INFO = rostopic_funcs.InterProcessTopicsInfo()
+TOPICS_INFO.start()
 
 #TODO make_response is not being used properly
 
@@ -82,7 +85,7 @@ def get_msg_type():
 
 @app.route('/subscribe')
 def subscribe():
-    global SUBSCRIBED_TOPICS, SUBSCRIBED_TOPICS_LOCK
+    global TOPICS_INFO
     try:
         topic = request.args['topic']
     except KeyError as e:
@@ -90,21 +93,11 @@ def subscribe():
         return make_response(jsonify(
                 {'error': 'You must specify a topic to subscribe to.'}), 400)
     with SUBSCRIBED_TOPICS_LOCK:
-        if topic in SUBSCRIBED_TOPICS:
-            topic_obj = SUBSCRIBED_TOPICS[topic]
-            if not topic_obj.monitoring:
-                topic_obj.start_monitoring()
-            return make_response(jsonify({}))
         try:
-            topic_type, _, topic_name, _ = rostopic_funcs.get_topic_info(topic)
-            if not topic_type or not topic_name:
-                return make_response(jsonify(
-                        {'error': 'Unable to subscribe to %s' % topic}), 400)
-            topic_obj = topic_info.TopicInfo(topic_name, topic_type)
-            #import pdb; pdb.set_trace()
-            topic_obj.start_monitoring()
-            SUBSCRIBED_TOPICS[topic] = topic_obj
-
+            TOPICS_INFO.subscribe(topic)
+        except ValueError as e:
+            logging.exception(e)
+            return make_response(jsonify({'error': 'Topic not found'}), 500)
         except Exception as e:
             logging.exception(e)
             return make_response(jsonify({}), 500)
@@ -112,6 +105,7 @@ def subscribe():
 
 @app.route('/get_last_msg')
 def get_last_msg():
+    global TOPICS_INFO
     try:
         topic = request.args['topic']
     except KeyError as e:
@@ -121,7 +115,7 @@ def get_last_msg():
                            'order to get its last message.')}), 400)
     try:
         return make_response(jsonify(rostopic_funcs.parse_msg_as_dict(
-                SUBSCRIBED_TOPICS[topic].last_message)))
+                TOPICS_INFO.get_last_msg(topic))))
     except AttributeError as e:
         logging.exception(e)
         return make_response(jsonify(
@@ -137,9 +131,4 @@ def get_last_msg():
 
 if __name__ == '__main__':
     app.debug = True
-    try:
-        rospy.init_node(NODE_NAME, anonymous=True, disable_signals=True,
-                        disable_rosout=True, disable_rostime=True)
-        app.run("0.0.0.0", threaded=5)
-    finally:
-        rospy.signal_shutdown("shutting down")
+    app.run("0.0.0.0", threaded=5)

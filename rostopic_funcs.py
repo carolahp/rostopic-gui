@@ -51,6 +51,11 @@ class InterProcessTopicsInfo(multiprocessing.Process):
     def _start_node(self):
         rospy.init_node(self.node_name, anonymous=True, disable_signals=True)
 
+    def _raise_on_exception(self, ret):
+        if isinstance(ret, Exception):
+            raise ret
+        return ret
+
     def run(self):
         self._start_node()
         self.topics_info = TopicsInfo()
@@ -79,25 +84,26 @@ class InterProcessTopicsInfo(multiprocessing.Process):
 
         rospy.signal_shutdown("Shutting down")
 
-    def send(self, s):
+    #TODO mutex in all the methods
+    def _send(self, s):
         self.to_process_queue.put(s)
         return self.from_process_queue.get()
 
     def get_last_msg(self, topic):
         self.to_process_queue.put((self._GET_LAST_MSG, topic))
-        return self.from_process_queue.get()
+        return self._raise_on_exception(self.from_process_queue.get())
 
     def subscribe(self, topic):
         self.to_process_queue.put((self._SUBSCRIBE, topic))
-        return self.from_process_queue.get()
+        return self._raise_on_exception(self.from_process_queue.get())
 
     def get_bw(self, topic):
         self.to_process_queue.put((self._GET_BW, topic))
-        return self.from_process_queue.get()
+        return self._raise_on_exception(self.from_process_queue.get())
 
     def get_hz(self, topic):
         self.to_process_queue.put((self._GET_HZ, topic))
-        return self.from_process_queue.get()
+        return self._raise_on_exception(self.from_process_queue.get())
 
 
 def get_topic_info(topic):
