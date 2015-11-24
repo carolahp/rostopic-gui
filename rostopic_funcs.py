@@ -1,6 +1,104 @@
+import multiprocessing
+
 import roslib
 import rosmsg
+import rospy
 import rostopic
+
+from rqt_topic.topic_info import TopicInfo
+
+#TODO set timeout to stop monitoring.
+class TopicsInfo():
+    def __init__(self):
+        self.topics = {}
+
+    def subscribe(self, topic):
+        if topic in self.topics:
+            if not self.topics[topic].monitoring:
+                self.topics[topic].start_monitoring()
+            return
+        topic_type, _, topic_name, _ = get_topic_info(topic)
+        if not topic_type or not topic_name:
+            raise ValueError("Topic not found")
+        topic_obj = TopicInfo(topic_name, topic_type)
+
+        topic_obj.start_monitoring()
+
+        self.topics[topic_name] = topic_obj
+        if topic_name != topic:
+            self.topics[topic] = topic_obj
+
+    def get_last_msg(self, topic):
+        return self.topics[topic].last_message
+
+    def get_bw(self, topic):
+        return self.topics[topic].get_bw()
+
+    def get_hz(self, topic):
+        return self.topics[topic].get_hz()
+
+class InterProcessTopicsInfo(multiprocessing.Process):
+    _GET_LAST_MSG = 'get_last_msg'
+    _SUBSCRIBE = 'subscribe'
+    _GET_BW = 'get_bw'
+    _GET_HZ = 'get_hz'
+    def __init__(self, node_name="interprocesstopicsinfo"):
+        self.to_process_queue = multiprocessing.Queue()
+        self.from_process_queue = multiprocessing.Queue()
+        self.node_name = node_name
+        super(InterProcessTopicsInfo, self).__init__()
+
+    def _start_node(self):
+        rospy.init_node(self.node_name, anonymous=True, disable_signals=True)
+
+    def run(self):
+        self._start_node()
+        self.topics_info = TopicsInfo()
+        while True:
+            req, param = self.to_process_queue.get()
+            try:
+                if req == self._GET_LAST_MSG:
+                    ret = self.topics_info.get_last_msg(param)
+                    self.from_process_queue.put(ret)
+
+                elif req == self._SUBSCRIBE:
+                    ret = self.topics_info.subscribe(param)
+                    self.from_process_queue.put(ret)
+
+                elif req == self._GET_BW:
+                    ret = self.topics_info.get_bw(param)
+                    self.from_process_queue.put(ret)
+
+                elif req == self._GET_HZ:
+                    ret = self.topics_info.get_hz(param)
+                    self.from_process_queue.put(ret)
+                else:
+                    self.from_process_queue.put("Not a valid operation (%s)" % req)
+            except Exception as e:
+                self.from_process_queue.put(e)
+
+        rospy.signal_shutdown("Shutting down")
+
+    def send(self, s):
+        self.to_process_queue.put(s)
+        return self.from_process_queue.get()
+
+    def get_last_msg(self, topic):
+        self.to_process_queue.put((self._GET_LAST_MSG, topic))
+        return self.from_process_queue.get()
+
+    def subscribe(self, topic):
+        self.to_process_queue.put((self._SUBSCRIBE, topic))
+        return self.from_process_queue.get()
+
+    def get_bw(self, topic):
+        self.to_process_queue.put((self._GET_BW, topic))
+        return self.from_process_queue.get()
+
+    def get_hz(self, topic):
+        self.to_process_queue.put((self._GET_HZ, topic))
+        return self.from_process_queue.get()
+
 
 def get_topic_info(topic):
     topic_type, real_topic, msg_eval = rostopic.get_topic_type(topic)
@@ -23,8 +121,6 @@ def _extract_array_info(type_str):
 def parse_msg_as_dict(msg, name='msg'):
     ret_list = []
     ret = {}
-    print(msg)
-    print('')
     if msg is None:
         return {}
     if hasattr(msg, '__slots__') and hasattr(msg, '_slot_types'):

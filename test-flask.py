@@ -138,7 +138,8 @@ def get_last_msg():
 if __name__ == '__main__':
     app.debug = True
     try:
-        rospy.init_node(NODE_NAME, anonymous=True, disable_signals=True)
-        app.run("0.0.0.0", threaded=True)
+        rospy.init_node(NODE_NAME, anonymous=True, disable_signals=True,
+                        disable_rosout=True, disable_rostime=True)
+        app.run("0.0.0.0", threaded=5)
     finally:
         rospy.signal_shutdown("shutting down")
