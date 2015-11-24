@@ -1,0 +1,57 @@
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>jQuery Mobile: Theme Download</title>
+	<link rel="stylesheet" href="{{url_for('static', filename='css/rostopic-web.min.css')}}" />
+	<link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile.icons.min.css')}}" />
+	<link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile.structure-1.4.5.min.css')}}" />
+	<script src="{{url_for('static', filename='js/jquery-1.11.1.min.js')}}"></script>
+	<script src="{{url_for('static', filename='js/jquery.mobile-1.4.5.min.js')}}"></script>
+
+    <script src="{{url_for('static', filename='js/interactions.js')}}"></script>
+</head>
+<body>
+	<div data-role="page" data-theme="a">
+        <div data-role="panel" id="leftpanel" data-display="overlay" >
+	        <h2>Panel Header</h2>
+            <div class="ui-grid-a" data-role="collapsible" id="publishing-collapsible">
+                <h4>Publishing</h4>
+                <a href="#leftpanel" id="publishingtogglebutton" data-role="button" data-icon="arrow-d">Publishing</a> 
+            </div>
+            <div class="ui-grid-a" data-role="collapsible" id="echoing-collapsible">
+                <h4>Echoing</h4>
+                <a href="#leftpanel" id="publishingtogglebutton" data-role="button" data-icon="arrow-d">Echoing</a> 
+            </div>
+        </div>
+
+		<div data-role="header" data-position="inline">
+            <a href="#leftpanel" id="lpaneltogglebutton" data-role="button" data-icon="grid" data-mini="true" data-inline="true" data-iconpos="notext"></a> 
+			<h1>It Worked YAY!</h1>
+            <a href="#" background-image="url('data:image/speakericon.png')" data-role="button" data-icon="speakericon" data-mini="true" data-inline="true" data-iconpos="notext"></a>
+		</div>
+		<div data-role="content" data-theme="a">
+            <a href="#leftpanel">Open panel</a>
+            
+			<p>Your theme was successfully downloaded. You can use this page as a reference for how to link it up!</p>
+			<pre>
+<strong>&lt;link rel=&quot;stylesheet&quot; href=&quot;themes/rostopic-web.min.css&quot; /&gt;</strong>
+<strong>&lt;link rel=&quot;stylesheet&quot; href=&quot;themes/jquery.mobile.icons.min.css&quot; /&gt;</strong>
+&lt;link rel=&quot;stylesheet&quot; href=&quot;http://code.jquery.com/mobile/1.4.5/jquery.mobile.structure-1.4.5.min.css&quot; /&gt;
+&lt;script src=&quot;http://code.jquery.com/jquery-1.11.1.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js&quot;&gt;&lt;/script&gt;
+			</pre>
+			<p>This is content color swatch "A" and a preview of a <a href="#" class="ui-link">link</a>.</p>
+			<label for="slider1">Input slider:</label>
+			<input type="range" name="slider1" id="slider1" value="50" min="0" max="100" data-theme="a" />
+			<fieldset data-role="controlgroup"  data-type="horizontal" data-role="fieldcontain">
+			<legend>Cache settings:</legend>
+			<input type="radio" name="radio-choice-a1" id="radio-choice-a1" value="on" checked="checked" />
+			<label for="radio-choice-a1">On</label>
+			<input type="radio" name="radio-choice-a1" id="radio-choice-b1" value="off"  />
+			<label for="radio-choice-b1">Off</label>
+			</fieldset>
+		</div>
+	</div>
+</body>
+</html>
