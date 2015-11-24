@@ -30,6 +30,10 @@ SUBSCRIBED_TOPICS_LOCK = threading.Lock()
 def hello_world():
     return 'Hello World!'
 
+@app.route('/scroll')
+def scroll():
+    return render_template('scroll_test.html')
+
 @app.route('/svg')
 def svg():
     global SVG_GENERATOR
@@ -55,7 +59,14 @@ def interaction():
 
 @app.route('/mobile')
 def get_mobile():
-    return render_template('new_index.html')
+    global SVG_GENERATOR
+    try:
+	svg_path = SVG_GENERATOR.get_current_svg('static/graphs')
+    except generate_dotcode.UnreachableRos:
+        return make_response(
+                jsonify({"error" : "Unable to reach ROS, is it running?"}), 401)
+
+    return render_template('new_index.html', svg_filename=svg_path)
 
 #API
 @app.route('/get_msg_type')

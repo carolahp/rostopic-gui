@@ -27,20 +27,17 @@
 
 		<div data-role="header" data-position="inline">
             <a href="#leftpanel" id="lpaneltogglebutton" data-role="button" data-icon="grid" data-mini="true" data-inline="true" data-iconpos="notext"></a> 
-			<h1>It Worked YAY!</h1>
+			<h1>Nodes and topics diagram</h1>
+            <div class="page-content">
+              <div><object class="svgClass" id="svg-container" width="400" height="300" type="image/svg+xml" data='{{ svg_filename }}'></object></div>
+              <div id="topic_msg_type">Topic:<br>Type:</div>
+            </div>
             <a href="#" background-image="url('data:image/speakericon.png')" data-role="button" data-icon="speakericon" data-mini="true" data-inline="true" data-iconpos="notext"></a>
 		</div>
 		<div data-role="content" data-theme="a">
-            <a href="#leftpanel">Open panel</a>
             
-			<p>Your theme was successfully downloaded. You can use this page as a reference for how to link it up!</p>
-			<pre>
-<strong>&lt;link rel=&quot;stylesheet&quot; href=&quot;themes/rostopic-web.min.css&quot; /&gt;</strong>
-<strong>&lt;link rel=&quot;stylesheet&quot; href=&quot;themes/jquery.mobile.icons.min.css&quot; /&gt;</strong>
-&lt;link rel=&quot;stylesheet&quot; href=&quot;http://code.jquery.com/mobile/1.4.5/jquery.mobile.structure-1.4.5.min.css&quot; /&gt;
-&lt;script src=&quot;http://code.jquery.com/jquery-1.11.1.min.js&quot;&gt;&lt;/script&gt;
-&lt;script src=&quot;http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js&quot;&gt;&lt;/script&gt;
-			</pre>
+			
+			
 			<p>This is content color swatch "A" and a preview of a <a href="#" class="ui-link">link</a>.</p>
 			<label for="slider1">Input slider:</label>
 			<input type="range" name="slider1" id="slider1" value="50" min="0" max="100" data-theme="a" />
