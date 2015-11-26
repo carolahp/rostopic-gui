@@ -6,10 +6,79 @@
 	<link rel="stylesheet" href="{{url_for('static', filename='css/rostopic-web.min.css')}}" />
 	<link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile.icons.min.css')}}" />
 	<link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile.structure-1.4.5.min.css')}}" />
+    <!--jquery-->
 	<script src="{{url_for('static', filename='js/jquery-1.11.1.min.js')}}"></script>
 	<script src="{{url_for('static', filename='js/jquery.mobile-1.4.5.min.js')}}"></script>
+	<script src="{{url_for('static', filename='js/jquery.panzoom.js')}}"></script>
+    <!--resizable touch canvas-->
+    <script>
+        window.onload = function(){
+        
+		addListeners();
+        
+	};
 
-    <script src="{{url_for('static', filename='js/interactions.js')}}"></script>
+    function addListeners(){
+	    var a = document.getElementById("svg-container");
+	    var svgDoc = a.contentDocument;
+		var allElemsG = svgDoc.getElementsByTagName("g");
+		/* iterate G elements */
+		for(var i = 0; i < allElemsG.length; i++)	{
+			var elemG = allElemsG[i];
+			if(elemG.getAttribute("class") == "edge") {
+				var eGChildren = elemG.childNodes;
+				var edgeElems = [];
+				var topicName = "";
+
+				for(var j = 0; j < eGChildren.length; j++) {
+					var child = eGChildren[j];
+					/* get topic name */
+					if(child.tagName == "title") {
+						topicName = child.innerHTML.split('&gt;')[1];
+					}
+					/* save polygons and paths found inside G (arrow parts) */
+					if(child.tagName == "polygon" || child.tagName == "path") {
+						edgeElems.push(child);
+					}
+				}
+				/* iterate polygons and paths found in G */
+				for(var j = 0; j < edgeElems.length; j++) {
+					var colorStroke = function() {
+						var childCopy = edgeElems[j];
+						var edgeElemsCopy = edgeElems;
+						var topicNameCopy = topicName;
+						/* function that changes the arrow color */
+						var colorStrokeFun = generateStrokeFun(edgeElemsCopy)
+						/* add events listeners */
+						addListenersToElement(childCopy, topicNameCopy, colorStrokeFun)
+					}
+					colorStroke();
+				}
+			}
+		}
+    }
+
+	function addListenersToElement(element, topicName, colorStrokeFun) {
+		element.addEventListener('click', function(event) { $.getJSON('/get_msg_type', {
+														  topic: topicName
+														}, function(data) {
+														  $('#topic_msg_type').html('Topic: ' + data.real_topic + '<br>Type: ' + data.topic_type);
+														});});
+		element.addEventListener('mouseover', function (event) { colorStrokeFun("red")});
+		element.addEventListener('mouseout', function (event) { colorStrokeFun("black")});
+	}
+
+	function generateStrokeFun(edgeElems) {
+		return function(color) {
+				for(var k = 0; k < edgeElems.length; k++){
+					var childCp = edgeElems[k];
+					childCp.setAttribute("stroke", color);
+					if(childCp.tagName == "polygon")
+						childCp.setAttribute("fill", color);
+				}
+		}
+	}
+    </script>
 </head>
 <body>
 	<div data-role="page" data-theme="a">
@@ -27,17 +96,42 @@
 
 		<div data-role="header" data-position="inline">
             <a href="#leftpanel" id="lpaneltogglebutton" data-role="button" data-icon="grid" data-mini="true" data-inline="true" data-iconpos="notext"></a> 
-			<h1>Nodes and topics diagram</h1>
+			
+            <h1>Nodes and topics diagram</h1>
             <div class="page-content">
-              <div><object class="svgClass" id="svg-container" width="400" height="300" type="image/svg+xml" data='{{ svg_filename }}'></object></div>
-              <div id="topic_msg_type">Topic:<br>Type:</div>
+            
+            <section>
+              <h1>Panning and zooming with CSS3</h1>
+              <div class="parent">
+                  <object class="panzoom" id="svg-container" width="400" height="300" type="image/svg+xml" data='{{ svg_filename }}'></object>
+              </div>
+              <div class="buttons">
+                <button class="zoom-in">Zoom In</button>
+                <button class="zoom-out">Zoom Out</button>
+                <input type="range" class="zoom-range">
+                <button class="reset">Reset</button>
+              </div>
+              <script>
+                (function() {
+                  var $section = $('section').first();
+                  $section.find('.panzoom').panzoom({
+                    $zoomIn: $section.find(".zoom-in"),
+                    $zoomOut: $section.find(".zoom-out"),
+                    $zoomRange: $section.find(".zoom-range"),
+                    $reset: $section.find(".reset")
+                  });
+                })();
+              </script>
+            </section>
+            
+            <div id="topic_msg_type">Topic:<br>Type:</div>
             </div>
             <a href="#" background-image="url('data:image/speakericon.png')" data-role="button" data-icon="speakericon" data-mini="true" data-inline="true" data-iconpos="notext"></a>
 		</div>
 		<div data-role="content" data-theme="a">
-            
+    
 			
-			
+			<!--
 			<p>This is content color swatch "A" and a preview of a <a href="#" class="ui-link">link</a>.</p>
 			<label for="slider1">Input slider:</label>
 			<input type="range" name="slider1" id="slider1" value="50" min="0" max="100" data-theme="a" />
@@ -48,6 +142,7 @@
 			<input type="radio" name="radio-choice-a1" id="radio-choice-b1" value="off"  />
 			<label for="radio-choice-b1">Off</label>
 			</fieldset>
+            -->
 		</div>
 	</div>
 </body>
