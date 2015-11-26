@@ -28,6 +28,9 @@ class TopicsInfo():
         if topic_name != topic:
             self.topics[topic] = topic_obj
 
+    def unsubscribe(self, topic):
+	self.topics[topic].stop_monitoring()
+
     def get_last_msg(self, topic):
         return self.topics[topic].last_message
 
@@ -35,6 +38,8 @@ class TopicsInfo():
         return self.topics[topic].get_bw()
 
     def get_hz(self, topic):
+	print("ASDASD")
+	print(self.topics[topic].get_hz())
         return self.topics[topic].get_hz()
 
 class InterProcessTopicsInfo(multiprocessing.Process):
@@ -42,6 +47,7 @@ class InterProcessTopicsInfo(multiprocessing.Process):
     _SUBSCRIBE = 'subscribe'
     _GET_BW = 'get_bw'
     _GET_HZ = 'get_hz'
+    _UNSUBSCRIBE = 'unsubscribe'
     def __init__(self, node_name="interprocesstopicsinfo"):
         self.to_process_queue = multiprocessing.Queue()
         self.from_process_queue = multiprocessing.Queue()
@@ -77,6 +83,10 @@ class InterProcessTopicsInfo(multiprocessing.Process):
                 elif req == self._GET_HZ:
                     ret = self.topics_info.get_hz(param)
                     self.from_process_queue.put(ret)
+
+		elif req == self._UNSUBSCRIBE:
+		    ret = self.topics_info.unsubscribe(param)
+                    self.from_process_queue.put(ret)
                 else:
                     self.from_process_queue.put("Not a valid operation (%s)" % req)
             except Exception as e:
@@ -105,6 +115,9 @@ class InterProcessTopicsInfo(multiprocessing.Process):
         self.to_process_queue.put((self._GET_HZ, topic))
         return self._raise_on_exception(self.from_process_queue.get())
 
+    def unsubscribe(self, topic):
+        self.to_process_queue.put((self._UNSUBSCRIBE, topic))
+        return self._raise_on_exception(self.from_process_queue.get())
 
 def get_topic_info(topic):
     topic_type, real_topic, msg_eval = rostopic.get_topic_type(topic)
