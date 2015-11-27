@@ -5,18 +5,82 @@
 	<title>jQuery Mobile: Theme Download</title>
 	<link rel="stylesheet" href="{{url_for('static', filename='css/rostopic-web.min.css')}}" />
 	<link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile.icons.min.css')}}" />
-	<link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile.structure-1.4.5.min.css')}}" />
+	<link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile-1.4.5.css')}}" />
+   
+    
     <!--jquery-->
-	<script src="{{url_for('static', filename='js/jquery-1.11.1.min.js')}}"></script>
-	<script src="{{url_for('static', filename='js/jquery.mobile-1.4.5.min.js')}}"></script>
-	<script src="{{url_for('static', filename='js/jquery.panzoom.js')}}"></script>
+	
+	<script src="{{url_for('static', filename='js/jquery-2.1.4.min.js')}}"></script>
+  <script src="{{url_for('static', filename='js/jquery.forwardevents.js')}}"></script>
+  <script src="{{url_for('static', filename='js/jquery.mobile-1.4.5.min.js')}}"></script>
+	<script src="{{url_for('static', filename='js/svg-pan-zoom.js')}}"></script>
+	<script src="{{url_for('static', filename='js/hammer.js')}}"></script>
+	
     <!--resizable touch canvas-->
     <script>
         window.onload = function(){
         
-		addListeners();
+		    addListeners();
+		    var eventsHandler;
+        eventsHandler = {
+          haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel']
+        , init: function(options) {
+            var instance = options.instance
+              , initialScale = 1
+              , pannedX = 0
+              , pannedY = 0
+            // Init Hammer
+            // Listen only for pointer and touch events
+            this.hammer = Hammer(options.svgElement, {
+              inputClass: Hammer.SUPPORT_POINTER_EVENTS ? Hammer.PointerEventInput : Hammer.TouchInput
+            })
+            // Enable pinch
+            this.hammer.get('pinch').set({enable: true})
+            // Handle double tap
+            this.hammer.on('doubletap', function(ev){
+              instance.zoomIn()
+            })
+            // Handle pan
+            this.hammer.on('panstart panmove', function(ev){
+              // On pan start reset panned variables
+              if (ev.type === 'panstart') {
+                pannedX = 0
+                pannedY = 0
+              }
+              // Pan only the difference
+              instance.panBy({x: ev.deltaX - pannedX, y: ev.deltaY - pannedY})
+              pannedX = ev.deltaX
+              pannedY = ev.deltaY
+            })
+            // Handle pinch
+            this.hammer.on('pinchstart pinchmove', function(ev){
+              // On pinch start remember initial zoom
+              if (ev.type === 'pinchstart') {
+                initialScale = instance.getZoom()
+                instance.zoom(initialScale * ev.scale)
+              }
+              instance.zoom(initialScale * ev.scale)
+            })
+            // Prevent moving the page on some devices when panning over SVG
+            options.svgElement.addEventListener('touchmove', function(e){ e.preventDefault(); });
+          }
+        , destroy: function(){
+            this.hammer.destroy()
+          }
+        }
         
-	};
+        svgPanZoom('#svg-container', {
+                  zoomEnabled: true,
+                  controlIconsEnabled: true,
+                  preventMouseEventsDefault: false,
+                  dblClickZoomEnabled: false,
+                  mouseWheelZoomEnabled: false,
+                  fit: 1,
+                  center: 1,
+                  customEventsHandler: eventsHandler
+                });  
+                
+	    };
 
     function addListeners(){
 	    var a = document.getElementById("svg-container");
@@ -102,26 +166,10 @@
             
             <section>
               <h1>Panning and zooming with CSS3</h1>
-              <div class="parent">
-                  <object class="panzoom" id="svg-container" width="400" height="300" type="image/svg+xml" data='{{ svg_filename }}'></object>
-              </div>
-              <div class="buttons">
-                <button class="zoom-in">Zoom In</button>
-                <button class="zoom-out">Zoom Out</button>
-                <input type="range" class="zoom-range">
-                <button class="reset">Reset</button>
-              </div>
-              <script>
-                (function() {
-                  var $section = $('section').first();
-                  $section.find('.panzoom').panzoom({
-                    $zoomIn: $section.find(".zoom-in"),
-                    $zoomOut: $section.find(".zoom-out"),
-                    $zoomRange: $section.find(".zoom-range"),
-                    $reset: $section.find(".reset")
-                  });
-                })();
-              </script>
+              <object class="panzoom" id="svg-container" data='{{ svg_filename }}' style="width: 300px; height: 300px; border:1px solid black; " type="image/svg+xml" ></object>
+              
+              
+              
             </section>
             
             <div id="topic_msg_type">Topic:<br>Type:</div>
