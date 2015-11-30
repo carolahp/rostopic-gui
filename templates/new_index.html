@@ -1,197 +1,195 @@
 <html>
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>jQuery Mobile: Theme Download</title>
-	<link rel="stylesheet" href="{{url_for('static', filename='css/rostopic-web.min.css')}}" />
-	<link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile.icons.min.css')}}" />
-	<link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile-1.4.5.css')}}" />
-   
-    
-    <!--jquery-->
-	
-	<script src="{{url_for('static', filename='js/jquery-2.1.4.min.js')}}"></script>
-  <script src="{{url_for('static', filename='js/jquery.forwardevents.js')}}"></script>
-  <script src="{{url_for('static', filename='js/jquery.mobile-1.4.5.min.js')}}"></script>
-	<script src="{{url_for('static', filename='js/svg-pan-zoom.js')}}"></script>
-	<script src="{{url_for('static', filename='js/hammer.js')}}"></script>
-	
-    <!--resizable touch canvas-->
-    <script>
-        window.onload = function(){
-        
-		    addListeners();
-		    var eventsHandler;
-        eventsHandler = {
-          haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel']
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>jQuery Mobile: Theme Download</title>
+        <link rel="stylesheet" href="{{url_for('static', filename='css/rostopic-web.min.css')}}" />
+        <link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile.icons.min.css')}}" />
+        <link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile-1.4.5.css')}}" />
+
+
+        <!--jquery-->
+
+        <script src="{{url_for('static', filename='js/jquery-2.1.4.min.js')}}"></script>
+        <script src="{{url_for('static', filename='js/jquery.forwardevents.js')}}"></script>
+        <script src="{{url_for('static', filename='js/jquery.mobile-1.4.5.min.js')}}"></script>
+        <script src="{{url_for('static', filename='js/svg-pan-zoom.js')}}"></script>
+        <script src="{{url_for('static', filename='js/hammer.js')}}"></script>
+
+        <!--resizable touch canvas-->
+        <script>
+            window.onload = function(){
+
+                addListeners();
+                var eventsHandler;
+                eventsHandler = {
+                    haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel']
         , init: function(options) {
-            var instance = options.instance
+    var instance = options.instance
               , initialScale = 1
               , pannedX = 0
               , pannedY = 0
-            // Init Hammer
-            // Listen only for pointer and touch events
-            this.hammer = Hammer(options.svgElement, {
-              inputClass: Hammer.SUPPORT_POINTER_EVENTS ? Hammer.PointerEventInput : Hammer.TouchInput
-            })
-            // Enable pinch
-            this.hammer.get('pinch').set({enable: true})
-            // Handle double tap
-            this.hammer.on('doubletap', function(ev){
-              instance.zoomIn()
-            })
-            // Handle pan
-            this.hammer.on('panstart panmove', function(ev){
-              // On pan start reset panned variables
-              if (ev.type === 'panstart') {
-                pannedX = 0
-                pannedY = 0
-              }
-              // Pan only the difference
-              instance.panBy({x: ev.deltaX - pannedX, y: ev.deltaY - pannedY})
-              pannedX = ev.deltaX
-              pannedY = ev.deltaY
-            })
-            // Handle pinch
-            this.hammer.on('pinchstart pinchmove', function(ev){
-              // On pinch start remember initial zoom
-              if (ev.type === 'pinchstart') {
-                initialScale = instance.getZoom()
-                instance.zoom(initialScale * ev.scale)
-              }
-              instance.zoom(initialScale * ev.scale)
-            })
-            // Prevent moving the page on some devices when panning over SVG
-            options.svgElement.addEventListener('touchmove', function(e){ e.preventDefault(); });
-          }
-        , destroy: function(){
-            this.hammer.destroy()
-          }
+          // Init Hammer
+              // Listen only for pointer and touch events
+              this.hammer = Hammer(options.svgElement, {
+                  inputClass: Hammer.SUPPORT_POINTER_EVENTS ? Hammer.PointerEventInput : Hammer.TouchInput
+              })
+              // Enable pinch
+              this.hammer.get('pinch').set({enable: true})
+              // Handle double tap
+              this.hammer.on('doubletap', function(ev){
+                  instance.zoomIn()
+              })
+              // Handle pan
+              this.hammer.on('panstart panmove', function(ev){
+                  // On pan start reset panned variables
+                  if (ev.type === 'panstart') {
+                      pannedX = 0
+                      pannedY = 0
+                  }
+                  // Pan only the difference
+                  instance.panBy({x: ev.deltaX - pannedX, y: ev.deltaY - pannedY})
+                  pannedX = ev.deltaX
+                  pannedY = ev.deltaY
+              })
+              // Handle pinch
+              this.hammer.on('pinchstart pinchmove', function(ev){
+                  // On pinch start remember initial zoom
+                  if (ev.type === 'pinchstart') {
+                      initialScale = instance.getZoom()
+                      instance.zoom(initialScale * ev.scale)
+                  }
+                  instance.zoom(initialScale * ev.scale)
+              })
+              // Prevent moving the page on some devices when panning over SVG
+              options.svgElement.addEventListener('touchmove', function(e){ e.preventDefault(); });
         }
-        
-        svgPanZoom('#svg-container', {
-                  zoomEnabled: true,
-                  controlIconsEnabled: true,
-                  preventMouseEventsDefault: false,
-                  dblClickZoomEnabled: false,
-                  mouseWheelZoomEnabled: false,
-                  fit: 1,
-                  center: 1,
-                  customEventsHandler: eventsHandler
-                });  
-                
-	    };
+        , destroy: function(){
+    this.hammer.destroy()
+        }
+                }
 
-    function addListeners(){
-	    var a = document.getElementById("svg-container");
-	    var svgDoc = a.contentDocument;
-		var allElemsG = svgDoc.getElementsByTagName("g");
-		/* iterate G elements */
-		for(var i = 0; i < allElemsG.length; i++)	{
-			var elemG = allElemsG[i];
-			if(elemG.getAttribute("class") == "edge") {
-				var eGChildren = elemG.childNodes;
-				var edgeElems = [];
-				var topicName = "";
+                svgPanZoom('#svg-container', {
+                    zoomEnabled: true,
+                    controlIconsEnabled: true,
+                    preventMouseEventsDefault: false,
+                    dblClickZoomEnabled: false,
+                    mouseWheelZoomEnabled: false,
+                    fit: 1,
+                    center: 1,
+                    customEventsHandler: eventsHandler
+                });
 
-				for(var j = 0; j < eGChildren.length; j++) {
-					var child = eGChildren[j];
-					/* get topic name */
-					if(child.tagName == "title") {
-						topicName = child.innerHTML.split('&gt;')[1];
-					}
-					/* save polygons and paths found inside G (arrow parts) */
-					if(child.tagName == "polygon" || child.tagName == "path") {
-						edgeElems.push(child);
-					}
-				}
-				/* iterate polygons and paths found in G */
-				for(var j = 0; j < edgeElems.length; j++) {
-					var colorStroke = function() {
-						var childCopy = edgeElems[j];
-						var edgeElemsCopy = edgeElems;
-						var topicNameCopy = topicName;
-						/* function that changes the arrow color */
-						var colorStrokeFun = generateStrokeFun(edgeElemsCopy)
-						/* add events listeners */
-						addListenersToElement(childCopy, topicNameCopy, colorStrokeFun)
-					}
-					colorStroke();
-				}
-			}
-		}
-    }
+            };
 
-	function addListenersToElement(element, topicName, colorStrokeFun) {
-		element.addEventListener('click', function(event) { $.getJSON('/get_msg_type', {
-														  topic: topicName
-														}, function(data) {
-														  $('#topic_msg_type').html('Topic: ' + data.real_topic + '<br>Type: ' + data.topic_type);
-														});});
-		element.addEventListener('mouseover', function (event) { colorStrokeFun("red")});
-		element.addEventListener('mouseout', function (event) { colorStrokeFun("black")});
-	}
+            function addListeners(){
+                var a = document.getElementById("svg-container");
+                var svgDoc = a.contentDocument;
+                var allElemsG = svgDoc.getElementsByTagName("g");
+                /* iterate G elements */
+                for(var i = 0; i < allElemsG.length; i++)	{
+                    var elemG = allElemsG[i];
+                    if(elemG.getAttribute("class") == "edge") {
+                        var eGChildren = elemG.childNodes;
+                        var edgeElems = [];
+                        var topicName = "";
 
-	function generateStrokeFun(edgeElems) {
-		return function(color) {
-				for(var k = 0; k < edgeElems.length; k++){
-					var childCp = edgeElems[k];
-					childCp.setAttribute("stroke", color);
-					if(childCp.tagName == "polygon")
-						childCp.setAttribute("fill", color);
-				}
-		}
-	}
-    </script>
-</head>
-<body>
-	<div data-role="page" data-theme="a">
-        <div data-role="panel" id="leftpanel" data-display="overlay" >
-	        <h2>Panel Header</h2>
-            <div class="ui-grid-a" data-role="collapsible" id="publishing-collapsible">
-                <h4>Publishing</h4>
-                <a href="#leftpanel" id="publishingtogglebutton" data-role="button" data-icon="arrow-d">Publishing</a> 
+                        for(var j = 0; j < eGChildren.length; j++) {
+                            var child = eGChildren[j];
+                            /* get topic name */
+                            if(child.tagName == "title") {
+                                topicName = child.innerHTML.split('&gt;')[1];
+                            }
+                            /* save polygons and paths found inside G (arrow parts) */
+                            if(child.tagName == "polygon" || child.tagName == "path") {
+                                edgeElems.push(child);
+                            }
+                        }
+                        /* iterate polygons and paths found in G */
+                        for(var j = 0; j < edgeElems.length; j++) {
+                            var colorStroke = function() {
+                                var childCopy = edgeElems[j];
+                                var edgeElemsCopy = edgeElems;
+                                var topicNameCopy = topicName;
+                                /* function that changes the arrow color */
+                                var colorStrokeFun = generateStrokeFun(edgeElemsCopy)
+                                /* add events listeners */
+                                addListenersToElement(childCopy, topicNameCopy, colorStrokeFun)
+                            }
+                            colorStroke();
+                        }
+                    }
+                }
+            }
+
+            function addListenersToElement(element, topicName, colorStrokeFun) {
+                element.addEventListener('click', function(event) { $.getJSON('/get_msg_type', {
+                    topic: topicName
+                }, function(data) {
+                    $('#topic_msg_type').html('Topic: ' + data.real_topic + '<br>Type: ' + data.topic_type);
+                });});
+                element.addEventListener('mouseover', function (event) { colorStrokeFun("red")});
+                element.addEventListener('mouseout', function (event) { colorStrokeFun("black")});
+            }
+
+            function generateStrokeFun(edgeElems) {
+                return function(color) {
+                    for(var k = 0; k < edgeElems.length; k++){
+                        var childCp = edgeElems[k];
+                        childCp.setAttribute("stroke", color);
+                        if(childCp.tagName == "polygon")
+                            childCp.setAttribute("fill", color);
+                    }
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <div data-role="page" data-theme="a">
+            <div data-role="panel" id="leftpanel" data-display="overlay" >
+                <h2>Panel Header</h2>
+                <div class="ui-grid-a" data-role="collapsible" id="publishing-collapsible">
+                    <h4>Publishing</h4>
+                    <a href="#leftpanel" id="publishingtogglebutton" data-role="button" data-icon="arrow-d">Publishing</a>
+                </div>
+                <div class="ui-grid-a" data-role="collapsible" id="echoing-collapsible">
+                    <h4>Echoing</h4>
+                    <a href="#leftpanel" id="publishingtogglebutton" data-role="button" data-icon="arrow-d">Echoing</a>
+                </div>
             </div>
-            <div class="ui-grid-a" data-role="collapsible" id="echoing-collapsible">
-                <h4>Echoing</h4>
-                <a href="#leftpanel" id="publishingtogglebutton" data-role="button" data-icon="arrow-d">Echoing</a> 
+
+            <div data-role="header" data-position="inline">
+                <a href="#leftpanel" id="lpaneltogglebutton" data-role="button" data-icon="grid" data-mini="true" data-inline="true" data-iconpos="notext"></a>
+
+                <h1>Nodes and topics diagram</h1>
+                <a href="#" background-image="url('data:image/speakericon.png')" data-role="button" data-icon="speakericon" data-mini="true" data-inline="true" data-iconpos="notext"></a>
+            </div>
+            <div data-role="content" data-theme="a">
+                <div class="image-div"  style="text-align:center">
+                    <section style="margin:auto;">
+                        <h1>Panning and zooming with CSS3</h1>
+                        <object class="panzoom" id="svg-container" data='{{ svg_filename }}' style="width: 90%; height: 50%; horizontal-align:middle; border:1px solid black; " type="image/svg+xml" ></object>
+                    </section>
+
+                </div>
+                <div class="page-content">
+
+                    <div id="topic_msg_type" style="margin-left:5%;">Topic:<br>Type:</div>
+                    <!--
+                    <p>This is content color swatch "A" and a preview of a <a href="#" class="ui-link">link</a>.</p>
+                    <label for="slider1">Input slider:</label>
+                    <input type="range" name="slider1" id="slider1" value="50" min="0" max="100" data-theme="a" />
+                    <fieldset data-role="controlgroup"  data-type="horizontal" data-role="fieldcontain">
+                        <legend>Cache settings:</legend>
+                        <input type="radio" name="radio-choice-a1" id="radio-choice-a1" value="on" checked="checked" />
+                        <label for="radio-choice-a1">On</label>
+                        <input type="radio" name="radio-choice-a1" id="radio-choice-b1" value="off"  />
+                        <label for="radio-choice-b1">Off</label>
+                    </fieldset>
+                    -->
+
+                </div>
             </div>
         </div>
-
-		<div data-role="header" data-position="inline">
-            <a href="#leftpanel" id="lpaneltogglebutton" data-role="button" data-icon="grid" data-mini="true" data-inline="true" data-iconpos="notext"></a> 
-			
-            <h1>Nodes and topics diagram</h1>
-            <div class="page-content">
-            
-            <section>
-              <h1>Panning and zooming with CSS3</h1>
-              <object class="panzoom" id="svg-container" data='{{ svg_filename }}' style="width: 300px; height: 300px; border:1px solid black; " type="image/svg+xml" ></object>
-              
-              
-              
-            </section>
-            
-            <div id="topic_msg_type">Topic:<br>Type:</div>
-            </div>
-            <a href="#" background-image="url('data:image/speakericon.png')" data-role="button" data-icon="speakericon" data-mini="true" data-inline="true" data-iconpos="notext"></a>
-		</div>
-		<div data-role="content" data-theme="a">
-    
-			
-			<!--
-			<p>This is content color swatch "A" and a preview of a <a href="#" class="ui-link">link</a>.</p>
-			<label for="slider1">Input slider:</label>
-			<input type="range" name="slider1" id="slider1" value="50" min="0" max="100" data-theme="a" />
-			<fieldset data-role="controlgroup"  data-type="horizontal" data-role="fieldcontain">
-			<legend>Cache settings:</legend>
-			<input type="radio" name="radio-choice-a1" id="radio-choice-a1" value="on" checked="checked" />
-			<label for="radio-choice-a1">On</label>
-			<input type="radio" name="radio-choice-a1" id="radio-choice-b1" value="off"  />
-			<label for="radio-choice-b1">Off</label>
-			</fieldset>
-            -->
-		</div>
-	</div>
-</body>
+    </body>
 </html>
