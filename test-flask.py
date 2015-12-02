@@ -73,11 +73,14 @@ def get_mobile():
     global SVG_GENERATOR
     try:
 	svg_path = SVG_GENERATOR.get_current_svg('static/graphs')
+	
     except generate_dotcode.UnreachableRos:
+        
         return make_response(
                 jsonify({"error" : "Unable to reach ROS, is it running?"}), 401)
-
-    return render_template('new_index.html', svg_filename=svg_path)
+    print("asd")
+    return render_template('new_index.html', svg_filename=
+    svg_path)
 
 #API
 
