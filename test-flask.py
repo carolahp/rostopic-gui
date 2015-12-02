@@ -65,7 +65,6 @@ def interaction():
 @app.route('/mobile')
 def get_mobile():
     global SVG_GENERATOR
-    print("session: ", get_session())
     try:
 	svg_path = SVG_GENERATOR.get_current_svg('static/graphs')
     except generate_dotcode.UnreachableRos:
