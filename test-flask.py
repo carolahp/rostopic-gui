@@ -33,6 +33,12 @@ TOPICS_INFO_DICT = {}
 def generate_session_identifier():
     return str(str(time.time()) + str(random.random()))
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico',
+                               mimetype='image/vnd.microsoft.icon')
+
 def get_session_identifier():
     if 'user_id' not in session:
 	session['user_id'] = generate_session_identifier()

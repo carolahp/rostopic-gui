@@ -112,9 +112,6 @@ class GraphWrapper(object):
         self.graph.write_svg(path)
         return self.graph
 
-class MyException(Exception):
-    pass
-
 class Generator(object):
     def __init__(self):
         self.last_svg_generated = None
@@ -126,13 +123,18 @@ class Generator(object):
         try:
             self.master.getPid()
         except socket.error:
-            raise MyException("Master not available")
+            raise UnreachableRos("Master not available")
 
     def _generate_graph(self, path, nodes_include=None, nodes_exclude=None,
                         topics_include=None, topics_exclude=None,
                         hide_dead_sinks=True):
-        nn_nodes = {n.strip() for n in self._graph.nn_nodes}
+        nn_all_nodes = {n.strip() for n in self._graph.nn_nodes}
         topics = {n.strip() for n in self._graph.nt_nodes}
+
+	if nodes_exclude:
+            nn_nodes = {n for n in nn_all_nodes if n not in nodes_exclude}
+	else:
+	    nn_nodes = nn_all_nodes
 
         edges = {e for e in self._graph.nt_all_edges}
 
@@ -181,10 +183,21 @@ class Generator(object):
                 graph.add_node(topic, shape='diamond')
 
         for e in edges:
-            if (e.start.strip() not in filtered_topics and
-                e.end.strip() not in filtered_topics):
+	    start = e.start.strip()
+	    end = e.end.strip()
+	    exclude = False
+	    #TODO check this
+            if (start not in filtered_topics and
+                end not in filtered_topics):
                 continue
-            graph.add_edge(e.start.strip(), e.end.strip(), label=str(e))
+	    if nodes_exclude is not None:
+	    	for n in nodes_exclude:
+		    if end.startswith(n) or start.startswith(n):
+		        exclude = True
+		        break
+	        if exclude:
+		    continue
+            graph.add_edge(start, end, label=str(e))
         dot = graph.generate_dot(path)
 
     def generate(self, path):
