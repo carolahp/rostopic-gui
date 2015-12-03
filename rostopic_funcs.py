@@ -35,11 +35,10 @@ class TopicsInfo():
         return self.topics[topic].last_message
 
     def get_bw(self, topic):
+        print(self.topics[topic].get_bw())
         return self.topics[topic].get_bw()
 
     def get_hz(self, topic):
-	print("ASDASD")
-	print(self.topics[topic].get_hz())
         return self.topics[topic].get_hz()
 
 class InterProcessTopicsInfo(multiprocessing.Process):

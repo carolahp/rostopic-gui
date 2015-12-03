@@ -84,7 +84,7 @@ def get_mobile():
 
 #API
 
-def _topic_template_executer(func):
+def _topic_template_executer(func, parser):
     topics_info = get_topics_info(get_session_identifier())
     try:
         topic = request.args['topic']
@@ -94,21 +94,25 @@ def _topic_template_executer(func):
                 {'error': 'You must specify a topic to subscribe to.'}), 400)
     with SUBSCRIBED_TOPICS_LOCK:
         try:
-            func(topic)
+            return parser(func(topic))
+        except KeyError as e:
+            logging.exception(e)
+            return make_response(jsonify(
+                {"error": "Topic not found, are you subscribed to this topic?."}),
+                400)
         except ValueError as e:
             logging.exception(e)
             return make_response(jsonify({'error': 'Topic not found'}), 400)
         except Exception as e:
             logging.exception(e)
             return make_response(jsonify({}), 500)
-        return make_response(jsonify({}))
 
 
 @app.route('/get_msg_type')
 def get_msg_type():
     try:
         topic = request.args['topic']
-    except keyerror as e:
+    except KeyError as e:
         logging.exception(e)
         return make_response(jsonify(
                 {"error": "You must specify a topic to get the msg type."}),
@@ -129,22 +133,26 @@ def get_msg_type():
 @app.route('/subscribe')
 def subscribe():
     topics_info = get_topics_info(get_session_identifier())
-    return _topic_template_executer(topics_info.subscribe)
+    return _topic_template_executer(topics_info.subscribe,
+                                    lambda x: make_response(jsonify({})))
 
 @app.route('/unsubscribe')
 def unsubscribe():
     topics_info = get_topics_info(get_session_identifier())
-    return _topic_template_executer(topics_info.unsubscribe)
+    return _topic_template_executer(topics_info.unsubscribe,
+                                    lambda x: make_response(jsonify({})))
 
 @app.route('/get_hz')
 def get_hz():
     topics_info = get_topics_info(get_session_identifier())
-    return _topic_template_executer(topics_info.get_hz)
+    return _topic_template_executer(topics_info.get_hz,
+                                    lambda x: make_response(jsonify({'hz':x[0]})))
 
 @app.route('/get_bw')
 def get_bw():
     topics_info = get_topics_info(get_session_identifier())
-    return _topic_template_executer(topics_info.get_bw)
+    return _topic_template_executer(topics_info.get_bw,
+                                    lambda x: make_response(jsonify({'avg': x[0]})))
 
 @app.route('/get_last_msg')
 def get_last_msg():
