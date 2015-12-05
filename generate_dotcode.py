@@ -7,16 +7,18 @@ import time
 import rosgraph
 from rosgraph.impl import graph
 
-
 import rwlock
+
 
 class UnreachableRos(Exception):
     """Raised when ROS not reachable."""
     pass
 
+
 def escape_text(text):
     return text
-    #return text.replace('/', '_').replace('%', '_').replace('-', '_')
+    # return text.replace('/', '_').replace('%', '_').replace('-', '_')
+
 
 class Node(object):
     def __init__(self, name, incoming=None, outgoing=None, edges=None):
@@ -30,6 +32,7 @@ class Node(object):
 
     def add_outgoing(self, item):
         self.outgoing.add(item)
+
 
 # Idea taken from PydotFactory
 class GraphWrapper(object):
@@ -65,7 +68,7 @@ class GraphWrapper(object):
                  url=None):
         if not nodename:
             raise ValueError("Empty nodename")
-        #TODO we might want to escape some characters. See pydot
+        # TODO we might want to escape some characters. See pydot
         node = pydot.Node(escape_text(nodename))
         self._customize_item(node, label=nodelabel, shape=shape, color=color,
                              url=url)
@@ -102,7 +105,7 @@ class GraphWrapper(object):
         c.set_label(label or name)
         self.graph.add_subgraph(c)
         self.subgraphs[name] = GraphWrapper(graph=c)
-        #print(c.get_name())
+        # print(c.get_name())
         return self.subgraphs[name]
 
     def get_cluster(self, name):
@@ -111,6 +114,7 @@ class GraphWrapper(object):
     def generate_dot(self, path):
         self.graph.write_svg(path)
         return self.graph
+
 
 class Generator(object):
     def __init__(self):
@@ -131,10 +135,10 @@ class Generator(object):
         nn_all_nodes = {n.strip() for n in self._graph.nn_nodes}
         topics = {n.strip() for n in self._graph.nt_nodes}
 
-	if nodes_exclude:
+        if nodes_exclude:
             nn_nodes = {n for n in nn_all_nodes if n not in nodes_exclude}
-	else:
-	    nn_nodes = nn_all_nodes
+        else:
+            nn_nodes = nn_all_nodes
 
         edges = {e for e in self._graph.nt_all_edges}
 
@@ -155,12 +159,12 @@ class Generator(object):
 
         if hide_dead_sinks:
             filtered_topics = [e for e in topics
-                                        if e in graph_dict and
-                                           len(graph_dict[e].outgoing) > 0]
+                               if e in graph_dict and
+                               len(graph_dict[e].outgoing) > 0]
         else:
             filtered_topics = topics
 
-        #Clustering
+        # Clustering
         last_namespace = ""
         namespaces = set()
         str_edges = [e.split('/')[1:] for e in sorted(filtered_topics)]
@@ -183,20 +187,20 @@ class Generator(object):
                 graph.add_node(topic, shape='diamond')
 
         for e in edges:
-	    start = e.start.strip()
-	    end = e.end.strip()
-	    exclude = False
-	    #TODO check this
+            start = e.start.strip()
+            end = e.end.strip()
+            exclude = False
+            # TODO check this
             if (start not in filtered_topics and
-                end not in filtered_topics):
+                        end not in filtered_topics):
                 continue
-	    if nodes_exclude is not None:
-	    	for n in nodes_exclude:
-		    if end.startswith(n) or start.startswith(n):
-		        exclude = True
-		        break
-	        if exclude:
-		    continue
+            if nodes_exclude is not None:
+                for n in nodes_exclude:
+                    if end.startswith(n) or start.startswith(n):
+                        exclude = True
+                        break
+                if exclude:
+                    continue
             graph.add_edge(start, end, label=str(e))
         dot = graph.generate_dot(path)
 
@@ -213,7 +217,7 @@ class Generator(object):
 
     def get_current_svg(self, prefix="", file_name=None,
                         max_time_to_refresh=5):
-        #TODO when do we remove old files ?
+        # TODO when do we remove old files ?
         with rwlock.read_lock(self.rwlock):
             now = time.time()
             name = file_name if file_name else "%s.svg" % now
@@ -232,6 +236,7 @@ def main():
     g = Generator()
     g.generate()
     pass
+
 
 if __name__ == '__main__':
     main()
