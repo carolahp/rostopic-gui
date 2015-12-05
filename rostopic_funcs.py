@@ -7,7 +7,6 @@ import rostopic
 
 from rqt_topic.topic_info import TopicInfo
 
-#TODO set timeout to stop monitoring.
 class TopicsInfo():
     def __init__(self):
         self.topics = {}
