@@ -217,15 +217,19 @@ class Generator(object):
 
     def get_current_svg(self, prefix="", file_name=None,
                         max_time_to_refresh=5):
+        print('0')
         # TODO when do we remove old files ?
         with rwlock.read_lock(self.rwlock):
+            print('1')
             now = time.time()
             name = file_name if file_name else "%s.svg" % now
             path = os.path.join(prefix, name)
 
             if now - self.last_svg_generated_ts > max_time_to_refresh:
                 self.rwlock.promote()
+                print('a')
                 self.generate(path)
+                print('b')
                 self.last_svg_generated = path
                 self.last_svg_generated_ts = now
 

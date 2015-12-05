@@ -78,11 +78,15 @@ from contextlib import contextmanager
 @contextmanager
 def read_lock(lock):
     lock.acquire_read()
-    yield lock
-    lock.release()
+    try:
+        yield lock
+    finally:
+        lock.release()
 
 @contextmanager
 def write_lock(lock):
     lock.acquire_write()
-    yield lock
-    lock.release()
+    try:
+        yield lock
+    finally:
+        lock.release()

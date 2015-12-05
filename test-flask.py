@@ -74,6 +74,7 @@ def interaction():
 
 
 @app.route('/mobile')
+@app.route('/')
 def get_mobile():
     global SVG_GENERATOR
     try:
@@ -84,8 +85,7 @@ def get_mobile():
         return make_response(
             jsonify({"error": "Unable to reach ROS, is it running?"}), 401)
     print("asd")
-    return render_template('new_index.html', svg_filename=
-    svg_path)
+    return render_template('new_index.html', svg_filename=svg_path)
 
 
 # API
