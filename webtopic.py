@@ -50,7 +50,8 @@ def get_session_identifier():
 def get_topics_info(user_id):
     global TOPICS_INFO_DICT
     if user_id not in TOPICS_INFO_DICT:
-        topic_info = rostopic_funcs.InterProcessTopicsInfo()
+        global NODE_NAME
+        topic_info = rostopic_funcs.InterProcessTopicsInfo(NODE_NAME)
         topic_info.start()
         TOPICS_INFO_DICT[user_id] = topic_info
     return TOPICS_INFO_DICT[user_id]
@@ -76,15 +77,15 @@ def interaction():
 @app.route('/mobile')
 @app.route('/')
 def get_mobile():
-    global SVG_GENERATOR
+    global SVG_GENERATOR, NODE_NAME
     try:
-        svg_path = SVG_GENERATOR.get_current_svg('static/graphs')
+        svg_path = SVG_GENERATOR.get_current_svg(
+                'static/graphs', nodes_exclude=['/' + NODE_NAME])
 
     except generate_dotcode.UnreachableRos:
 
         return make_response(
             jsonify({"error": "Unable to reach ROS, is it running?"}), 401)
-    print("asd")
     return render_template('new_index.html', svg_filename=svg_path)
 
 

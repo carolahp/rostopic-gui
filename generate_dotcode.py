@@ -129,16 +129,28 @@ class Generator(object):
         except socket.error:
             raise UnreachableRos("Master not available")
 
+    @staticmethod
+    def _filter_nodes(nodes, exclude):
+        if exclude is None:
+            return {n.strip() for n in nodes}
+        ret = set()
+        for n_ in nodes:
+            n = n_.strip()
+            skip = False
+            for e in exclude:
+                if n.startswith(e):
+                    skip = True
+                    break
+            if not skip:
+                ret.add(n)
+        return ret
+
     def _generate_graph(self, path, nodes_include=None, nodes_exclude=None,
                         topics_include=None, topics_exclude=None,
                         hide_dead_sinks=True):
-        nn_all_nodes = {n.strip() for n in self._graph.nn_nodes}
-        topics = {n.strip() for n in self._graph.nt_nodes}
 
-        if nodes_exclude:
-            nn_nodes = {n for n in nn_all_nodes if n not in nodes_exclude}
-        else:
-            nn_nodes = nn_all_nodes
+        nn_nodes = self._filter_nodes(self._graph.nn_nodes, nodes_exclude)
+        topics = self._filter_nodes(self._graph.nt_nodes, topics_exclude)
 
         edges = {e for e in self._graph.nt_all_edges}
 
@@ -204,7 +216,7 @@ class Generator(object):
             graph.add_edge(start, end, label=str(e))
         dot = graph.generate_dot(path)
 
-    def generate(self, path):
+    def generate(self, path, **kwargs):
         self._graph = rosgraph.impl.graph.Graph()
         self._graph.set_master_stale(5.0)
         self._graph.set_node_stale(5.0)
@@ -212,10 +224,10 @@ class Generator(object):
             self._graph.update()
         except socket.error:
             raise UnreachableRos("Ros not reachable")
-        self._generate_graph(path)
+        self._generate_graph(path, **kwargs)
 
     def get_current_svg(self, prefix="", file_name=None,
-                        max_time_to_refresh=5):
+                        max_time_to_refresh=5, **kwargs):
         # TODO when do we remove old files ?
         with rwlock.read_lock(self.rwlock):
             now = time.time()
@@ -224,7 +236,7 @@ class Generator(object):
 
             if now - self.last_svg_generated_ts > max_time_to_refresh:
                 self.rwlock.promote()
-                self.generate(path)
+                self.generate(path, **kwargs)
                 self.last_svg_generated = path
                 self.last_svg_generated_ts = now
 
