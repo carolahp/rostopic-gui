@@ -78,7 +78,7 @@ window.onload = function(){
 					var child = eGChildren[j];
 					/* get topic name */
 					if(child.tagName == "title") {
-						topicName = child.innerHTML.split('&gt;')[1];
+						topicName = child.innerHTML.split('-&gt;');
 					}
 					/* save polygons and paths found inside G (arrow parts) */
 					if(child.tagName == "polygon" || child.tagName == "path") {
@@ -106,6 +106,7 @@ window.onload = function(){
 		element.addEventListener('click', function(event) { $.getJSON('/get_msg_type', {
 														  topic: topicName
 														}, function(data) {
+															$.selected_topic = data.real_topic;
 														  $('#topic_msg_type').html('Topic: ' + data.real_topic + '<br>Type: ' + data.topic_type);
 														});});
 		element.addEventListener('mouseover', function (event) { colorStrokeFun("red")});

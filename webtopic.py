@@ -128,16 +128,19 @@ def _topic_template_executer(func, parser):
 @app.route('/get_msg_type')
 def get_msg_type():
     try:
-        topic = request.args['topic']
+        topic = request.args.getlist('topic[]')
     except KeyError as e:
         logging.exception(e)
         return make_response(jsonify(
-            {"error": "You must specify a topic to get the msg type."}),
+            {"error": "You must specify a topic[] to get the msg type."}),
             400)
     try:
-        topic_type, msg_class, real_topic, msg_eval = (
-            rostopic_funcs.get_topic_info(topic))
-    except exception as e:
+        for t in topic:
+            topic_type, msg_class, real_topic, msg_eval = (
+                rostopic_funcs.get_topic_info(t))
+            if real_topic is not None:
+                break
+    except Exception as e:
         logging.exception(e)
         return make_response(jsonify({"error": "ERROR"}), 400)
     msg_struct = rostopic_funcs.get_msg_struct(topic_type)
@@ -145,7 +148,7 @@ def get_msg_type():
                     'real_topic': real_topic,
                     'msg_eval': msg_eval,
                     'msg_struct': msg_struct,
-                    'query_topic': topic})
+                    'query_topic': real_topic})
 
 
 @app.route('/subscribe')
@@ -204,4 +207,4 @@ def get_last_msg():
 
 if __name__ == '__main__':
     app.debug = True
-    app.run("0.0.0.0", threaded=5)
+    app.run("0.0.0.0", threaded=55)

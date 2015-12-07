@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Rescaler 0.1</title>
+	<meta name="viewport" content="initial-scale=1">
+	<style type="text/css">
+		#overlay {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			width: 100%;
+			padding: 20px;
+			background-color: orange;
+			-webkit-box-sizing: border-box;
+			box-sizing: border-box;
+			-webkit-transition: all 0.1s ease-in-out;
+			-webkit-transform-origin: 0 100%;
+		}
+		#frame {
+			position: fixed;
+			top: 30px;
+			left: 0;
+			width: 100%;
+			background-color: blue;
+			border: 0;
+		}
+	</style>
+</head>
+<body>
+
+<!-- start slipsum code -->
+
+<p id="report-scale">base text to be replaced</p>
+<p id="report-left"></p>
+<p id="report-bottom"></p>
+
+<!-- end slipsum code -->
+
+<div id="overlay">
+	Your bones don't break, mine do. That's clear. Your cells react to bacteria and viruses differently than mine. You don't get sick, I do.
+</div>
+
+</body>
+<script type="text/javascript">
+
+	var overlay = document.getElementById('overlay');
+
+	window.addEventListener('scroll', function(e){
+  		document.getElementById('report-scale').innerHTML = document.documentElement.clientWidth/window.innerWidth + " " + window.innerWidth/document.documentElement.clientWidth;
+        document.getElementById('report-left').innerHTML = window.pageXOffset;
+        document.getElementById('report-bottom').innerHTML = window.pageYOffset;
+
+        overlay.style.position = 'absolute';
+        overlay.style.left = window.pageXOffset + 'px';
+        overlay.style.bottom = document.documentElement.clientHeight - (window.pageYOffset + window.innerHeight) + 'px';
+        overlay.style["-webkit-transform"] = "scale(" + window.innerWidth/document.documentElement.clientWidth + ")";
+
+
+	});
+
+
+</script>
+</html>
