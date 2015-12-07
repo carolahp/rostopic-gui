@@ -12,17 +12,11 @@
         <script src="{{url_for('static', filename='js/jstree.js')}}"></script>
         <script>
             window.onload = function() {
-                var topic_name = '{{ topic }}';
-                $.getJSON('/get_msg_type', 
-                    { topic: topic_name }, 
-                    function(data) {
-                        $('#topic_msg_type').html('Topic: ' + data.msg_struct);
-                        
-                        var strjson = "{\"core\" : {\"data\" : ["+scan(data.msg_struct)+"]}}";
-                        var objjson = $.parseJSON(strjson);
-                        //window.console.log(JSON.stringify(objjson, null, 2));
-                        $('#data').jstree(objjson);
-                    });
+                scan_JSON(function(data_type, data_msg) { 
+                    var strjson = "{\"core\" : {\"check_callback\" : true, \"data\" : ["+scan(data_type.msg_struct, data_msg)+"]}}";
+                    var objjson = $.parseJSON(strjson);
+                    $('#data').jstree(objjson);
+                });
               
 	            /* bind is for enabling tree expand on tap, for mobile devices */
 	            $('#data').bind("select_node.jstree", function (e, data) {
@@ -30,29 +24,40 @@
                 });
                 
             };
+            
+            function scan_JSON(callback) {
+                var topic_name = '{{ topic }}';
+                $.getJSON('/get_msg_type', 
+                    { topic: topic_name }, 
+                    function(data_type) {
+                        //$('#topic_msg_type').html('Topic: ' + data.msg_struct);
+                        $.getJSON('/get_last_msg',
+                            { topic: topic_name },
+                            function(data_msg) {
+                                
+                                callback(data_type, data_msg);
+                            });
+                    });
+            }
+            
+            /* scans JSON and returns a string according to jstree needs */
             var curr_id = 0;   
-            function scan(obj) {
+            function scan(obj, val) {
                 var k;
                 var ret = "";
                 if (obj instanceof Object) {
-                    
                     for (k in obj){
                         if (obj.hasOwnProperty(k)){
                             //recursive call to scan property
                             if(obj[k] instanceof Object) {
                                 ret += "{\"id\" : " + (++curr_id) + "," +
                                         "\"text\" : \"" + k + "\", " +
-                                        "\"children\": [" + scan(obj[k]) + "]},"; 
+                                        "\"children\": [" + scan(obj[k], val[k]) + "]},"; 
                             }
                             else {
-                                ret += "{\"id\" : " + (++curr_id) + "," +
-                                        "\"text\" : \"" + k + " : " + obj[k] + "\"},"; 
+                                ret += "{\"id\" : \"id" + (++curr_id) + "\"," +
+                                        "\"text\" : \"" + k + " [" + obj[k] + "] : " + val[k] + "\"},"; 
                             }
-                            /*
-                            ret += ("\"" + k + "\"" + ":" + (obj[k] instanceof Object ? 
-                                                "\n{[" + scan(obj[k]) + "]},\n " :
-                                                "\"" + obj[k] + "\",\n"));
-                            */
                         }                
                     }
                     ret = ret.substr(0, ret.length ) ;
@@ -61,11 +66,54 @@
                 };
                 return ret.substr(0, ret.length - 1);
             };
+            
+            /* traverse the json object and updates the leafs text */
+            function scanForUpdate(obj, val) {
+                var k;
+                window.console.log("update id " + update_id);
+                if (obj instanceof Object) {
+                    for (k in obj){
+                        if (obj.hasOwnProperty(k)){
+                            //recursive call to scan property
+                            if(obj[k] instanceof Object) {
+                                ++update_id;
+                                scanForUpdate(obj[k], val[k]); 
+                            }
+                            else {
+                                var this_node = $.jstree.reference('#data').get_node("id" + (++update_id));
+                                var renamed = $.jstree.reference('#data').rename_node(this_node, k + " [" + obj[k] + "] : " + val[k]);
+                                window.console.log(renamed + " " + $.jstree.reference('#data').get_text(this_node));             
+                            }
+                        }                
+                    }
+                } else {
+
+                };
+            };
+            
+            /* updates leafs value according to last_message received in the topic */
+            function update() {
+                update_id = 0;
+                scan_JSON(function(data_type, data_msg) { 
+                    scanForUpdate(data_type.msg_struct, data_msg);
+   
+                });
+            }
+            
+            
+
+            window.setInterval(function(){
+              update();
+            }, 500);
+
+
         </script>
     </head>
     <body>
+        <h3>Monitoring {{ topic }}</h3>
         <div id="topic_msg_type"></div>
         <div id="data"></div>
+        <button onclick="javascript:update()">redraw</button>
     </body>
 
 </html>
