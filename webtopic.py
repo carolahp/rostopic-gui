@@ -73,6 +73,16 @@ def interaction():
 
     return render_template('svg-interaction.html', svg_filename=svg_path)
 
+@app.route('/echo')
+def echo():
+    try:
+        topic = request.args['topic']
+    except KeyError as e:
+        logging.exception(e)
+        return make_response(jsonify(
+            {"error": "You must specify a topic and a msg type."}),
+            400)
+    return render_template('echo.html', topic=topic)
 
 @app.route('/mobile')
 @app.route('/')
