@@ -28,10 +28,12 @@ function scan_JSON(topic_name, callback) {
 			$.getJSON('/get_last_msg',
 				{ topic: topic_name },
 				function(data_msg) {
-				if(!data_msg || !data_type) {
-				console.error("Empty response for topic " + topic_name)
+				if($.isEmptyObject(data_msg) || $.isEmptyObject(data_type)) {
+					console.error("Empty response for topic " + topic_name)
 				}
-				callback(data_type, data_msg);
+				else {
+					callback(data_type, data_msg);
+				}
 				});
 			});
 }
