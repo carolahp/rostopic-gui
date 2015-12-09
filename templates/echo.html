@@ -1,19 +1,31 @@
 <script>
 
 function activate(topic_name) {
-	scan_JSON(topic_name, function(data_type, data_msg) { 
-			var strjson = "{\"core\" : {\"check_callback\" : true, \"data\" : ["+scan(data_type.msg_struct, data_msg)+"]}}";
-			var objjson = $.parseJSON(strjson);
-			$('#data').jstree(objjson);
-			});
+    if(isRealValue($.jstree.reference('#data'))) {
+        /* disable interval update function for old topic */
+        deactivate();
+        /* destroy old jstree */
+        $.jstree.reference('#data').destroy();
+        
+    }
+	scan_JSON(topic_name, function(data_type, data_msg) {
+        var data_string = scan(data_type.msg_struct, data_msg);
+		var strjson = "{\"core\" : {\"check_callback\" : true, \"data\" : ["+ data_string +"]}}";
+		var objjson = $.parseJSON(strjson);
+		/* create new jstree */
+		$('#data').jstree(objjson);
+	});
 
 	/* bind is for enabling tree expand on tap, for mobile devices */
 	$('#data').bind("select_node.jstree", function (e, data) {
 			return data.instance.toggle_node(data.node);
 			});
+    
+    /* create interval function for updating every x milliseconds */
 	$.interval_func = window.setInterval(function(){
-		update();
+		update(topic_name);
 		}, 500);
+	$("#echo_topic_title").html("Monitoring " + topic_name);
 }
 
 function deactivate() {
@@ -24,7 +36,6 @@ function scan_JSON(topic_name, callback) {
 	$.getJSON('/get_msg_type', 
 			{ topic: [topic_name] }, 
 			function(data_type) {
-			//$('#topic_msg_type').html('Topic: ' + data.msg_struct);
 			$.getJSON('/get_last_msg',
 				{ topic: topic_name },
 				function(data_msg) {
@@ -68,7 +79,7 @@ function scan(obj, val) {
 /* traverse the json object and updates the leafs text */
 function scanForUpdate(obj, val) {
 	var k;
-	window.console.log("update id " + update_id);
+	//window.console.log("update id " + update_id);
 	if (obj instanceof Object) {
 		for (k in obj){
 			if (obj.hasOwnProperty(k)){
@@ -80,7 +91,7 @@ function scanForUpdate(obj, val) {
 				else {
 					var this_node = $.jstree.reference('#data').get_node("id" + (++update_id));
 					var renamed = $.jstree.reference('#data').rename_node(this_node, k + " [" + obj[k] + "] : " + val[k]);
-					window.console.log(renamed + " " + $.jstree.reference('#data').get_text(this_node));             
+					//window.console.log(renamed + " " + $.jstree.reference('#data').get_text(this_node));             
 				}
 			}                
 		}
@@ -90,16 +101,15 @@ function scanForUpdate(obj, val) {
 };
 
 /* updates leafs value according to last_message received in the topic */
-function update() {
+function update(topic_name) {
 	update_id = 0;
-	scan_JSON(function(data_type, data_msg) { 
-			scanForUpdate(data_type.msg_struct, data_msg);
-
-			});
+	scan_JSON(topic_name, function(data_type, data_msg) { 
+		scanForUpdate(data_type.msg_struct, data_msg);
+		});
 }
 
 </script>
-<h3>Monitoring {{ topic }}</h3>
+<h3 id="echo_topic_title"></h3>
 <div id="echo_topic_msg_type"></div>
 <div id="data"></div>
 <button onclick="javascript:update()">redraw</button>

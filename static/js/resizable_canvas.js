@@ -1,7 +1,16 @@
-window.onload = function(){
-        
-		    addListeners();
-		    var eventsHandler;
+    window.onload = function(){
+        //alert("{{ svg_filename }}");
+        /*$.getJSON('/get_svg_topics_and_nodes', 
+			{ svg_name: '{{ svg_filename }}' }, 
+			function(data) {
+			    onloadCallback();
+			});
+		*/            
+    };
+    
+    function onloadCallback() {
+    	addListeners();
+	    var eventsHandler;
         eventsHandler = {
           haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel']
         , init: function(options) {
@@ -58,10 +67,8 @@ window.onload = function(){
                   fit: 1,
                   center: 1,
                   customEventsHandler: eventsHandler
-                });  
-                
-	    };
-
+                });      
+    }
     function addListeners(){
 	    var a = document.getElementById("svg-container");
 	    var svgDoc = a.contentDocument;
@@ -123,3 +130,5 @@ window.onload = function(){
 				}
 		}
 	}
+	
+	
