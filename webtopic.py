@@ -93,37 +93,13 @@ def get_mobile():
                 'static/graphs', nodes_exclude=['/' + NODE_NAME])
 
     except generate_dotcode.UnreachableRos:
-
         return make_response(
             jsonify({"error": "Unable to reach ROS, is it running?"}), 401)
+
     return render_template('new_index.html', svg_filename=svg_path)
 
 
 # API
-
-def _topic_template_executer(func, parser):
-    topics_info = get_topics_info(get_session_identifier())
-    try:
-        topic = request.args['topic']
-    except KeyError as e:
-        logging.exception(e)
-        return make_response(jsonify(
-            {'error': 'You must specify a topic to subscribe to.'}), 400)
-    with SUBSCRIBED_TOPICS_LOCK:
-        try:
-            return parser(func(topic))
-        except KeyError as e:
-            logging.exception(e)
-            return make_response(jsonify(
-                {"error": "Topic not found, are you subscribed to this topic?."}),
-                400)
-        except ValueError as e:
-            logging.exception(e)
-            return make_response(jsonify({'error': 'Topic not found'}), 400)
-        except Exception as e:
-            logging.exception(e)
-            return make_response(jsonify({}), 500)
-
 
 @app.route('/get_msg_type')
 def get_msg_type():
@@ -178,7 +154,6 @@ def get_bw():
     return _topic_template_executer(topics_info.get_bw,
                                     lambda x: make_response(jsonify({'avg': x[0]})))
 
-
 @app.route('/get_last_msg')
 def get_last_msg():
     topics_info = get_topics_info(get_session_identifier())
@@ -204,6 +179,47 @@ def get_last_msg():
         logging.exception(e)
         return make_response(jsonify({}), 500)
 
+@app.route('/get_svg_topics_and_nodes')
+def get_svg_topics_and_nodes():
+    global SVG_GENERATOR
+    try:
+        svg_name = request.args['svg_name']
+    except KeyError as e:
+        logging.exception(e)
+        return make_response(jsonify(
+                {'error': 'You must specify svg_name'}))
+    try:
+        topics, nodes = SVG_GENERATOR.get_svg_nodes_topics_lists(svg_name)
+    except KeyError as e:
+        logging.exception(e)
+        return make_response(jsonify(
+                {'error': 'Svg not available'}))
+    return make_response(jsonify(
+            {'topics': topics, 'nodes': nodes} ))
+
+#Utils
+def _topic_template_executer(func, parser):
+    topics_info = get_topics_info(get_session_identifier())
+    try:
+        topic = request.args['topic']
+    except KeyError as e:
+        logging.exception(e)
+        return make_response(jsonify(
+            {'error': 'You must specify a topic to subscribe to.'}), 400)
+    with SUBSCRIBED_TOPICS_LOCK:
+        try:
+            return parser(func(topic))
+        except KeyError as e:
+            logging.exception(e)
+            return make_response(jsonify(
+                {"error": "Topic not found, are you subscribed to this topic?."}),
+                400)
+        except ValueError as e:
+            logging.exception(e)
+            return make_response(jsonify({'error': 'Topic not found'}), 400)
+        except Exception as e:
+            logging.exception(e)
+            return make_response(jsonify({}), 500)
 
 if __name__ == '__main__':
     app.debug = True

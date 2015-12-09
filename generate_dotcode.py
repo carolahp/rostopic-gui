@@ -1,3 +1,4 @@
+from collections import deque
 import os
 import pydot
 import socket
@@ -121,6 +122,8 @@ class Generator(object):
         self.last_svg_generated = None
         self.last_svg_generated_ts = 0
         self.rwlock = rwlock.RWLock()
+        self.svg_nodes_topics = dict()
+        self.svg_list = deque(maxlen=2) # Keep the last 2 svg
         self.master = rosgraph.Master('/rostopic')
 
     def _check_master(self):
@@ -211,10 +214,18 @@ class Generator(object):
                     if end.startswith(n) or start.startswith(n):
                         exclude = True
                         break
-                if exclude:
-                    continue
+            if not exclude and topics_exclude is not None:
+                for n in nodes_exclude:
+                    if end.startswith(n) or start.startswith(n):
+                        exclude = True
+                        break
+            if exclude:
+                continue
+
             graph.add_edge(start, end, label=str(e))
         dot = graph.generate_dot(path)
+        self.topics = list(filtered_topics)
+        self.nodes = list(nn_nodes)
 
     def generate(self, path, **kwargs):
         self._graph = rosgraph.impl.graph.Graph()
@@ -226,6 +237,8 @@ class Generator(object):
             raise UnreachableRos("Ros not reachable")
         self._generate_graph(path, **kwargs)
 
+        self.svg_nodes_topics = dict()
+        self.svg_list = deque(maxlen=2) # Keep the last 2 svg
     def get_current_svg(self, prefix="", file_name=None,
                         max_time_to_refresh=5, **kwargs):
         # TODO when do we remove old files ?
@@ -240,7 +253,15 @@ class Generator(object):
                 self.last_svg_generated = path
                 self.last_svg_generated_ts = now
 
+                self.svg_nodes_topics[self.last_svg_generated] = (self.topics,
+                                                                  self.nodes)
+                #TODO remove the svg getting discarded here
+                self.svg_list.append(self.last_svg_generated)
+
             return self.last_svg_generated
+
+    def get_svg_nodes_topics_lists(self, svg_name):
+        return self.svg_nodes_topics[svg_name]
 
 
 def main():
