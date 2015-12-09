@@ -46,10 +46,10 @@ function scan_JSON(topic_name, callback) {
 				{ topic: topic_name },
 				function(data_msg) {
 				if($.isEmptyObject(data_type)) {
-					//console.log("Empty response for topic type " + topic_name)
+					console.error("Empty response for topic type " + topic_name)
 				}
 				else if($.isEmptyObject(data_msg)) {
-                    console.error("Empty response for topic messages " + topic_name)
+                    //console.error("Empty response for topic messages " + topic_name)
                     callback(data_type, null);
 				}
 				else {
@@ -119,8 +119,7 @@ function update(topic_name) {
 }
 
 </script>
-<h3 id="echo_topic_title"></h3>
+<h4 id="echo_topic_title"></h4>
 <div id="echo_topic_msg_type"></div>
 <div id="data"></div>
-<button onclick="javascript:update()">redraw</button>
 
