@@ -65,10 +65,13 @@
           }
           
           function addEchoedTopicToList(topic_name) {
-            var item_name = "btn_echoing_"+ topic_name; 
-            var newItem = "<a role=\"button\" class=\"ui-link ui-btn ui-icon-delete ui-btn-icon-left ui-shadow ui-corner-all\" href=\"#leftpanel\" id=\""+ item_name +"\" data-role=\"button\" data-icon=\"delete\" onclick=\"removeEchoedTopicFromList(this, '"+ topic_name +"');\">"+ topic_name +"</a>";
+            var item_name = "table_echoing"+ topic_name; 
+            var newItem = "<table id=\""+ item_name +"\"><tr><td>" + 
+                          "<a role=\"button\" class=\"ui-link ui-btn ui-icon-delete ui-btn-icon-notext ui-shadow ui-corner-all\" href=\"#leftpanel\" data-role=\"button\" data-icon=\"delete\" data-mini=\"true\" data-inline=\"true\" data-iconpos=\"notext\" onclick=\"removeEchoedTopicFromList(this, '"+ topic_name +"');\"></a>" + 
+                           "</td><td>"+ topic_name +"</td></tr></table>";
             $("#echoing-collapsible").find(".ui-collapsible-content").append(newItem);
           }
+          
           function removeEchoedTopicFromList(element, topic_name) {
             //unsubscribe to topic
             console.log(element.toString());
@@ -77,9 +80,11 @@
 			  url: '/unsubscribe',
 			  data: {topic : topic_name },
 			  success: function(data) { 
-                element.remove();
+			    console.log(element.parentNode.className)
+			    //remove table from echoing list
+                element.parentNode.parentNode.parentNode.remove();
                 console.log("unsubscribing " +  topic_name);
-			    // remove from $.subscriptions;
+			    // remove topic from $.subscriptions;
 			    delete $.subscriptions[topic_name];
 			  }
 			});
