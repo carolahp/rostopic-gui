@@ -15,5 +15,11 @@ This software was initially developed as the main project in CC-5407 - "Software
 * Carolina Hernández <ADD MAIL>
 * Francisco Montoto <fmontotomonroy@gmail.com>
 
-## License
+## Install
+TODO
 
+## Contribute
+TODO
+
+## License
+TODO
