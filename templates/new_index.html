@@ -2,7 +2,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>jQuery Mobile: Theme Download</title>
+        <title>Nodes and topics</title>
         <link rel="stylesheet" href="{{url_for('static', filename='css/rostopic-web.min.css')}}" />
         <link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile.icons.min.css')}}" />
         <link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile-1.4.5.css')}}" />
@@ -21,13 +21,11 @@
           	$.subscriptions = {};
           }
           window.onload = function(){
-            //alert("{{ svg_filename }}");
             $.getJSON('/get_svg_topics_and_nodes', 
                 { svg_name: '{{ svg_filename }}' }, 
                 function(data) {
-                    //onloadCallback();
+                    onloadCallback();
                 });
-            onloadCallback();              
           };
             
           function echo_button_click(){
@@ -36,13 +34,15 @@
                 return;
             }
             console.log($.selected_topic);
-
+            console.log(JSON.stringify($.subscriptions));
+            /* if there is no subscription to the topic, subscribe */
             if(!($.selected_topic in $.subscriptions)) {
                 $.ajax({
 				  dataType: "json",
 				  url: '/subscribe',
 				  data: {topic : $.selected_topic },
 				  success: function(data) { 
+				    $.subscriptions[$.selected_topic] = data;
 					open_echo_panel($.selected_topic);}
 				});
             }
@@ -62,7 +62,7 @@
           }
          
           function isRealValue(obj){
-             return obj && obj !== "null" && obj!== "undefined";
+             return (obj && obj !== "null" && obj!== "undefined");
           }
         </script>
         }
