@@ -1,9 +1,11 @@
-import os.path
 import logging
-import threading
-import logging
+import os
 import random
+import requests
+import threading
 import time
+import signal
+import sys
 
 from flask import Flask
 from flask import render_template, request, send_from_directory
@@ -52,6 +54,7 @@ def get_topics_info(user_id):
     if user_id not in TOPICS_INFO_DICT:
         global NODE_NAME
         topic_info = rostopic_funcs.InterProcessTopicsInfo(NODE_NAME)
+        topic_info.daemon = True
         topic_info.start()
         TOPICS_INFO_DICT[user_id] = topic_info
     return TOPICS_INFO_DICT[user_id]
@@ -221,6 +224,17 @@ def _topic_template_executer(func, parser):
             logging.exception(e)
             return make_response(jsonify({}), 500)
 
+def clean_exit():
+    global TOPICS_INFO_DICT
+    for t in TOPICS_INFO_DICT.values():
+        t.tear_down_process()
+    print("Clean exit")
+
+
 if __name__ == '__main__':
     app.debug = True
-    app.run("0.0.0.0", threaded=55)
+    #signal.signal(signal.SIGINT, _shutdown)
+    try:
+        ret = app.run("0.0.0.0", threaded=55, use_reloader=False)
+    finally:
+        clean_exit()

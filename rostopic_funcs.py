@@ -40,12 +40,17 @@ class TopicsInfo():
     def get_hz(self, topic):
         return self.topics[topic].get_hz()
 
+class InterProcessPublisher(multiprocessing.Process):
+    pass
+
+
 class InterProcessTopicsInfo(multiprocessing.Process):
     _GET_LAST_MSG = 'get_last_msg'
     _SUBSCRIBE = 'subscribe'
     _GET_BW = 'get_bw'
     _GET_HZ = 'get_hz'
     _UNSUBSCRIBE = 'unsubscribe'
+    _TEAR_DOWN = 'tear_down'
     def __init__(self, node_name="interprocesstopicsinfo"):
         self.to_process_queue = multiprocessing.Queue()
         self.from_process_queue = multiprocessing.Queue()
@@ -85,11 +90,17 @@ class InterProcessTopicsInfo(multiprocessing.Process):
 		elif req == self._UNSUBSCRIBE:
 		    ret = self.topics_info.unsubscribe(param)
                     self.from_process_queue.put(ret)
+
+                elif req == self._TEAR_DOWN:
+                    print("Tearing down")
+                    break
+
                 else:
                     self.from_process_queue.put("Not a valid operation (%s)" % req)
             except Exception as e:
                 self.from_process_queue.put(e)
 
+        print("Shutting down")
         rospy.signal_shutdown("Shutting down")
 
     #TODO mutex in all the methods
@@ -116,6 +127,9 @@ class InterProcessTopicsInfo(multiprocessing.Process):
     def unsubscribe(self, topic):
         self.to_process_queue.put((self._UNSUBSCRIBE, topic))
         return self._raise_on_exception(self.from_process_queue.get())
+
+    def tear_down_process(self):
+        self.to_process_queue.put((self._TEAR_DOWN, None))
 
 def get_topic_info(topic):
     topic_type, real_topic, msg_eval = rostopic.get_topic_type(topic)
