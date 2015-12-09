@@ -1,31 +1,37 @@
 <script>
-
+var last_topic_name = "";
 function activate(topic_name) {
-    if(isRealValue($.jstree.reference('#data'))) {
+    //window.console.log("TREE INITIALIZED " + isRealValue($.jstree.reference('#data')));
+    //window.console.log("DIFFERENT TOPIC " +  !(last_topic_name === topic_name));
+    if(!(last_topic_name === topic_name)) {
+        // topic changed
+        last_topic_name = topic_name;
         /* disable interval update function for old topic */
+        window.console.log("deactivating for new " + topic_name);
         deactivate();
-        /* destroy old jstree */
-        $.jstree.reference('#data').destroy();
+        if(isRealValue($.jstree.reference('#data'))) {
+            /* destroy old jstree */
+            $.jstree.reference('#data').destroy();
+        }
+        scan_JSON(topic_name, function(data_type, data_msg) {
+            var data_string = scan(data_type.msg_struct, data_msg);
+		    var strjson = "{\"core\" : {\"check_callback\" : true, \"data\" : ["+ data_string +"]}}";
+		    var objjson = $.parseJSON(strjson);
+		    /* create new jstree */
+		    $('#data').jstree(objjson);
+	    });
+	    /* bind is for enabling tree expand on tap, for mobile devices */
+	    $('#data').bind("select_node.jstree", function (e, data) {
+			    return data.instance.toggle_node(data.node);
+			    });
+        
+        /* create interval function for updating every x milliseconds */
+	    $.interval_func = window.setInterval(function(){
+		    update(topic_name);
+		    }, 500);
+	    $("#echo_topic_title").html("Monitoring " + topic_name);
         
     }
-	scan_JSON(topic_name, function(data_type, data_msg) {
-        var data_string = scan(data_type.msg_struct, data_msg);
-		var strjson = "{\"core\" : {\"check_callback\" : true, \"data\" : ["+ data_string +"]}}";
-		var objjson = $.parseJSON(strjson);
-		/* create new jstree */
-		$('#data').jstree(objjson);
-	});
-
-	/* bind is for enabling tree expand on tap, for mobile devices */
-	$('#data').bind("select_node.jstree", function (e, data) {
-			return data.instance.toggle_node(data.node);
-			});
-    
-    /* create interval function for updating every x milliseconds */
-	$.interval_func = window.setInterval(function(){
-		update(topic_name);
-		}, 500);
-	$("#echo_topic_title").html("Monitoring " + topic_name);
 }
 
 function deactivate() {
@@ -39,8 +45,12 @@ function scan_JSON(topic_name, callback) {
 			$.getJSON('/get_last_msg',
 				{ topic: topic_name },
 				function(data_msg) {
-				if($.isEmptyObject(data_msg) || $.isEmptyObject(data_type)) {
-					console.error("Empty response for topic " + topic_name)
+				if($.isEmptyObject(data_type)) {
+					console.error("Empty response for topic type " + topic_name)
+				}
+				else if($.isEmptyObject(data_msg)) {
+                    //console.error("Empty response for topic messages " + topic_name)
+                    callback(data_type, null);
 				}
 				else {
 					callback(data_type, data_msg);
@@ -61,11 +71,11 @@ function scan(obj, val) {
 				if(obj[k] instanceof Object) {
 					ret += "{\"id\" : " + (++curr_id) + "," +
 						"\"text\" : \"" + k + "\", " +
-						"\"children\": [" + scan(obj[k], val[k]) + "]},"; 
+						"\"children\": [" + scan(obj[k], (isRealValue(val) ? val[k] : null)) + "]},"; 
 				}
 				else {
 					ret += "{\"id\" : \"id" + (++curr_id) + "\"," +
-						"\"text\" : \"" + k + " [" + obj[k] + "] : " + val[k] + "\"},"; 
+						"\"text\" : \"" + k + " [" + obj[k] + "] : " + (isRealValue(val) ? val[k] : "") + "\"},"; 
 				}
 			}                
 		}
@@ -86,11 +96,11 @@ function scanForUpdate(obj, val) {
 				//recursive call to scan property
 				if(obj[k] instanceof Object) {
 					++update_id;
-					scanForUpdate(obj[k], val[k]); 
+					scanForUpdate(obj[k], (isRealValue(val) ? val[k] : null)); 
 				}
 				else {
 					var this_node = $.jstree.reference('#data').get_node("id" + (++update_id));
-					var renamed = $.jstree.reference('#data').rename_node(this_node, k + " [" + obj[k] + "] : " + val[k]);
+					var renamed = $.jstree.reference('#data').rename_node(this_node, k + " [" + obj[k] + "] : " + (isRealValue(val) ? val[k] : ""));
 					//window.console.log(renamed + " " + $.jstree.reference('#data').get_text(this_node));             
 				}
 			}                
@@ -109,8 +119,7 @@ function update(topic_name) {
 }
 
 </script>
-<h3 id="echo_topic_title"></h3>
+<h4 id="echo_topic_title"></h4>
 <div id="echo_topic_msg_type"></div>
 <div id="data"></div>
-<button onclick="javascript:update()">redraw</button>
 

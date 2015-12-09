@@ -2,7 +2,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>jQuery Mobile: Theme Download</title>
+        <title>Nodes and topics</title>
         <link rel="stylesheet" href="{{url_for('static', filename='css/rostopic-web.min.css')}}" />
         <link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile.icons.min.css')}}" />
         <link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile-1.4.5.css')}}" />
@@ -21,13 +21,11 @@
           	$.subscriptions = {};
           }
           window.onload = function(){
-            //alert("{{ svg_filename }}");
             $.getJSON('/get_svg_topics_and_nodes', 
                 { svg_name: '{{ svg_filename }}' }, 
                 function(data) {
-                    //onloadCallback();
+                    onloadCallback();
                 });
-            onloadCallback();              
           };
             
           function echo_button_click(){
@@ -35,16 +33,18 @@
                 console.log("no topic selected");
                 return;
             }
-            console.log($.selected_topic);
-
+            console.log("subscriptions: " + JSON.stringify($.subscriptions));
+            /* if there is no subscription to the topic, subscribe */
             if(!($.selected_topic in $.subscriptions)) {
                 $.ajax({
 				  dataType: "json",
 				  url: '/subscribe',
 				  data: {topic : $.selected_topic },
 				  success: function(data) { 
+				    $.subscriptions[$.selected_topic] = data;
 					open_echo_panel($.selected_topic);}
 				});
+				addEchoedTopicToList($.selected_topic);
             }
             else {
             	open_echo_panel($.selected_topic);
@@ -52,7 +52,6 @@
           }
 
           function open_echo_panel(topic_name) {
-          	console.log("activ");
           	activate(topic_name);
           }
 
@@ -62,11 +61,32 @@
           }
          
           function isRealValue(obj){
-             return obj && obj !== "null" && obj!== "undefined";
+             return (obj && obj !== "null" && obj!== "undefined");
+          }
+          
+          function addEchoedTopicToList(topic_name) {
+            var item_name = "btn_echoing_"+ topic_name; 
+            var newItem = "<a role=\"button\" class=\"ui-link ui-btn ui-icon-delete ui-btn-icon-left ui-shadow ui-corner-all\" href=\"#leftpanel\" id=\""+ item_name +"\" data-role=\"button\" data-icon=\"delete\" onclick=\"removeEchoedTopicFromList(this, '"+ topic_name +"');\">"+ topic_name +"</a>";
+            $("#echoing-collapsible").find(".ui-collapsible-content").append(newItem);
+          }
+          function removeEchoedTopicFromList(element, topic_name) {
+            //unsubscribe to topic
+            console.log(element.toString());
+            $.ajax({
+			  dataType: "json",
+			  url: '/unsubscribe',
+			  data: {topic : topic_name },
+			  success: function(data) { 
+                element.remove();
+                console.log("unsubscribing " +  topic_name);
+			    // remove from $.subscriptions;
+			    delete $.subscriptions[topic_name];
+			  }
+			});
+            
           }
         </script>
-        }
-
+        
     </head>
     <body>
         <div data-role="page" data-theme="a">
@@ -74,11 +94,11 @@
                 <h2>Panel Header</h2>
                 <div class="ui-grid-a" data-role="collapsible" id="publishing-collapsible">
                     <h4>Publishing</h4>
-                    <a href="#leftpanel" id="publishingtogglebutton" data-role="button" data-icon="arrow-d">Publishing</a>
+                    <!--<a href="#leftpanel" id="publishingtogglebutton" data-role="button" data-icon="arrow-d">Publishing</a>-->
                 </div>
                 <div class="ui-grid-a" data-role="collapsible" id="echoing-collapsible">
                     <h4>Echoing</h4>
-                    <a href="#leftpanel" id="publishingtogglebutton" data-role="button" data-icon="arrow-d">Echoing</a>
+                    <!--<a href="#leftpanel" id="publishingtogglebutton" data-role="button" data-icon="arrow-d">Echoing1</a>-->
                 </div>
             </div>
 
@@ -101,18 +121,7 @@
                 </div>
                 <div class="page-content">
                     <div id="topic_msg_type" style="margin-left:1%;">Topic:<br>Type:</div>
-                    <!--
-                    <p>This is content color swatch "A" and a preview of a <a href="#" class="ui-link">link</a>.</p>
-                    <label for="slider1">Input slider:</label>
-                    <input type="range" name="slider1" id="slider1" value="50" min="0" max="100" data-theme="a" />
-                    <fieldset data-role="controlgroup"  data-type="horizontal" data-role="fieldcontain">
-                        <legend>Cache settings:</legend>
-                        <input type="radio" name="radio-choice-a1" id="radio-choice-a1" value="on" checked="checked" />
-                        <label for="radio-choice-a1">On</label>
-                        <input type="radio" name="radio-choice-a1" id="radio-choice-b1" value="off"  />
-                        <label for="radio-choice-b1">Off</label>
-                    </fieldset>
-                    -->
+
                 </div>
             </div>
             <div data-role="footer" data-position="inline">
