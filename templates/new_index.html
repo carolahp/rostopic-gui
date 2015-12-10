@@ -24,7 +24,7 @@
             $.getJSON('/get_svg_topics_and_nodes', 
                 { svg_name: '{{ svg_filename }}' }, 
                 function(data) {
-                    onloadCallback();
+                    onloadCallback(data);
                 });
           };
             

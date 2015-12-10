@@ -1,5 +1,13 @@
-function onloadCallback() {
-	addListeners();
+function onloadCallback(topics_and_nodes) {
+    var all_topics = topics_and_nodes.topics;
+    var all_nodes = topics_and_nodes.nodes;
+	var svgDoc = $("#svg-container").contents();
+	addClasses(svgDoc, all_topics, all_nodes);
+	addListeners(svgDoc);
+    initSvgPanZoom(generatePanZoomEventsHandler());
+}
+
+function generatePanZoomEventsHandler() {
     var eventsHandler;
     eventsHandler = {
       haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel']
@@ -47,7 +55,10 @@ function onloadCallback() {
         this.hammer.destroy()
       }
     }
-    
+    return eventsHandler;
+}
+
+function initSvgPanZoom(eventsHandler) {
     svgPanZoom('#svg-container', {
               zoomEnabled: true,
               controlIconsEnabled: true,
@@ -59,66 +70,171 @@ function onloadCallback() {
               customEventsHandler: eventsHandler
             });      
 }
-function addListeners(){
-    var a = document.getElementById("svg-container");
-    var svgDoc = a.contentDocument;
-	var allElemsG = svgDoc.getElementsByTagName("g");
+
+function getROSElementName(title, all_elements) {
+    if( $.type(title) !== "string" || title === "" || title === null) {
+        return false;
+    }
+    possibleNames = title.split('-&gt;');
+    for(var i = 0; i < possibleNames.length; i++) {
+        if($.inArray(possibleNames[i], all_elements) > -1) {
+        return possibleNames[i].replace(/\//g,"-");
+        }
+    }
+    console.error("edge associated with no topic");
+    return false;
+}
+
+function addClasses(svgDoc, all_topics, all_nodes) {
+    var allElemsG = svgDoc.find("g");
+
 	/* iterate G elements */
 	for(var i = 0; i < allElemsG.length; i++)	{
-		var elemG = allElemsG[i];
-		if(elemG.getAttribute("class") == "edge") {
-			var eGChildren = elemG.childNodes;
-			var edgeElems = [];
-			var topicName = "";
-
-			for(var j = 0; j < eGChildren.length; j++) {
-				var child = eGChildren[j];
-				/* get topic name */
-				if(child.tagName == "title") {
-					topicName = child.innerHTML.split('-&gt;');
-				}
-				/* save polygons and paths found inside G (arrow parts) */
-				if(child.tagName == "polygon" || child.tagName == "path") {
-					edgeElems.push(child);
-				}
-			}
-			/* iterate polygons and paths found in G */
-			for(var j = 0; j < edgeElems.length; j++) {
-				var colorStroke = function() {
-					var childCopy = edgeElems[j];
-					var edgeElemsCopy = edgeElems;
-					var topicNameCopy = topicName;
-					/* function that changes the arrow color */
-					var colorStrokeFun = generateStrokeFun(edgeElemsCopy)
-					/* add events listeners */
-					addListenersToElement(childCopy, topicNameCopy, colorStrokeFun)
-				}
-				colorStroke();
-			}
+	    	
+		
+	    var elm = allElemsG[i];
+	    var elemG = $(elm);
+	    
+	    var title = elemG.find("title").html();
+		if(! title) {
+		    continue;
+		}
+		var className = "";
+		/* graph */
+		if(elemG.attr("class") == "graph") {
+            continue;
+		}
+		/* edge */
+		if(elemG.attr("class") == "edge") {
+    		className = "topic" + getROSElementName(title, all_topics);
+		}
+		/* node */
+		if(elemG.attr("class") == "node") {
+		    var isTopicName = getROSElementName(title, all_topics);
+		    if(! isTopicName ) {
+		        var isNodeName = getROSElementName(title, all_nodes);
+		        if(! isNodeName ) {
+		            console.error(title + " isn't topic nor node");
+		            continue;
+		        }
+		        else {
+		            className = "node" + isNodeName;
+		        }
+		    }
+		    else {
+		        className = "topic" + isTopicName;
+		    }
+		}
+	    var gChildren = [];
+        var polygons = elemG.find("polygon");	
+        //console.log("length polygons " +  polygons.length);
+        if(polygons.length > 0) {
+            gChildren.push(polygons[0]);
+        }
+		var paths = elemG.find("path");	
+        if(paths.length > 0) {
+            gChildren.push(paths[0]);
+        }
+		var texts = elemG.find("text");	
+        if(texts.length > 0) {
+            gChildren.push(texts[0]);
+        }
+		
+		/* iterate polygons and paths found in G */
+		for(var j = 0; j < gChildren.length; j++) {
+		    var child = $(gChildren[j]);
+		    child.attr("class", className);		    
 		}
 	}
 }
 
-function addListenersToElement(element, topicName, colorStrokeFun) {
-	element.addEventListener('click', function(event) { $.getJSON('/get_msg_type', {
-													  topic: topicName
-													}, function(data) {
-														$.selected_topic = data.real_topic;
-													  $('#topic_msg_type').html('Topic: ' + data.real_topic + '<br>Type: ' + data.topic_type);
-													});});
-	element.addEventListener('mouseover', function (event) { colorStrokeFun("red")});
-	element.addEventListener('mouseout', function (event) { colorStrokeFun("black")});
+function addListeners(svgDoc) {
+    var allElemsG = svgDoc.find("g");
+
+	/* iterate G elements */
+	for(var i = 0; i < allElemsG.length; i++) {
+	    var elm = allElemsG[i];
+	    var elemG = $(elm);
+	    var gChildren = [];
+        var polygons = elemG.find("polygon");	
+        //console.log("length polygons " +  polygons.length);
+        if(polygons.length > 0) {
+            gChildren.push(polygons[0]);
+        }
+		var paths = elemG.find("path");	
+        if(paths.length > 0) {
+            gChildren.push(paths[0]);
+        }
+		var texts = elemG.find("text");	
+        if(texts.length > 0) {
+            gChildren.push(texts[0]);
+        }
+		
+		/* iterate polygons and paths found in G */
+		for(var j = 0; j < gChildren.length; j++) {
+		    var child = $(gChildren[j]);
+		    var addListener = function(child_param, class_name_param) {
+		        var class_name_copy = class_name_param;
+		        var jclass = '.' + class_name_param;
+	            //console.log("jclass final " + jclass);
+	            if(jclass == ".") {
+	                console.error(this);
+	            }
+                var classElements = svgDoc.find(jclass);
+                
+		        child_param.mouseover(function() {
+		        	classElements.each(function(i, obj) {
+                        generateStrokeFun(obj, "on")();
+                    });
+    		    });
+    		    
+    		    child_param.mouseout(function() {
+		        	classElements.each(function(i, obj) {
+                        generateStrokeFun(obj, "off")();
+                    });
+    		    });
+		    }
+		    addListener(child, child.attr("class"));
+		    
+		}
+	}
 }
 
-function generateStrokeFun(edgeElems) {
-	return function(color) {
-			for(var k = 0; k < edgeElems.length; k++){
-				var childCp = edgeElems[k];
-				childCp.setAttribute("stroke", color);
-				if(childCp.tagName == "polygon")
-					childCp.setAttribute("fill", color);
-			}
-	}
+function generateStrokeFun(elem, new_state) {
+	return function() {
+	    var parentClass = elem.parentElement.getAttribute("class");
+	    var elemClass = elem.getAttribute("class");
+	    var isNode = elemClass.indexOf("node-") > -1;
+	    var color = "";
+	    if(new_state == "on") {
+	        color = (isNode ? "blue" : (parentClass == "edge" ? "crimson" : "red"));
+	    }
+	    else if(new_state == "off") {
+	        color = "black";
+	    }
+	    else {
+	        console.error("new_state is not defined");
+	        return;
+	    }
+
+	    var elemTag = elem.tagName;
+		switch (elemTag) {
+		    case "polygon":
+	            if(parentClass == "edge") {
+        		    elem.setAttribute("fill", color);		            
+	            }
+		        elem.setAttribute("stroke", color);
+		        break;
+		    
+		    case "text":
+		        elem.setAttribute("fill", color);		            
+		        break;
+		    
+		    case "path":
+		        elem.setAttribute("stroke", color);
+		        break;
+		}
+    }
 }
 
 
