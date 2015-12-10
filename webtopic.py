@@ -59,23 +59,6 @@ def get_topics_info(user_id):
         TOPICS_INFO_DICT[user_id] = topic_info
     return TOPICS_INFO_DICT[user_id]
 
-
-@app.route('/scroll')
-def scroll():
-    return render_template('scroll_test.html')
-
-
-@app.route('/interaction')
-def interaction():
-    global SVG_GENERATOR
-    try:
-        svg_path = SVG_GENERATOR.get_current_svg('static/graphs')
-    except generate_dotcode.UnreachableRos:
-        return make_response(
-            jsonify({"error": "Unable to reach ROS, is it running?"}), 401)
-
-    return render_template('svg-interaction.html', svg_filename=svg_path)
-
 @app.route('/echo')
 def echo():
     try:
@@ -99,7 +82,7 @@ def get_mobile():
         return make_response(
             jsonify({"error": "Unable to reach ROS, is it running?"}), 401)
 
-    return render_template('new_index.html', svg_filename=svg_path)
+    return render_template('index.html', svg_filename=svg_path)
 
 
 # API
