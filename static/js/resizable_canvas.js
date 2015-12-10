@@ -153,8 +153,13 @@ function addListeners(svgDoc) {
 
 	/* iterate G elements */
 	for(var i = 0; i < allElemsG.length; i++) {
+	    
 	    var elm = allElemsG[i];
 	    var elemG = $(elm);
+	    /* graph */
+		if(elemG.attr("class") == "graph") {
+            continue;
+		}
 	    var gChildren = [];
         var polygons = elemG.find("polygon");	
         //console.log("length polygons " +  polygons.length);
@@ -173,8 +178,13 @@ function addListeners(svgDoc) {
 		/* iterate polygons and paths found in G */
 		for(var j = 0; j < gChildren.length; j++) {
 		    var child = $(gChildren[j]);
+		    console.log(child);
+		    console.log(child.attr("class"));
 		    var addListener = function(child_param, class_name_param) {
 		        var class_name_copy = class_name_param;
+		        if(class_name_copy === "" || class_name_copy === null) return;
+		        console.log(class_name_copy);
+    		    
 		        var jclass = '.' + class_name_param;
 	            //console.log("jclass final " + jclass);
 	            if(jclass == ".") {
@@ -193,11 +203,37 @@ function addListeners(svgDoc) {
                         generateStrokeFun(obj, "off")();
                     });
     		    });
+    		    
+    		    var topicName = getTopicFromClass(class_name_copy);
+    		    
+    		    if(topicName) {
+    		        child_param.click(function() {
+		            	generateClickFun(topicName)();
+    		        });
+    		    }
 		    }
 		    addListener(child, child.attr("class"));
 		    
 		}
 	}
+}
+
+function getTopicFromClass(class_name) {
+    if(class_name.indexOf("node-") > -1) {
+        return false;
+    }
+    return "/" + class_name.substring(6, class_name.length).replace(/-/g,"/");
+}
+
+function generateClickFun(topic_name) {
+    return function() {
+        $.getJSON('/get_msg_type', {
+			      topic: [topic_name]
+			    }, function(data) {
+				    $.selected_topic = data.real_topic;
+			      $('#topic_msg_type').html('Topic: ' + data.real_topic + '<br>Type: ' + data.topic_type);
+    });
+    }
 }
 
 function generateStrokeFun(elem, new_state) {
