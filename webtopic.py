@@ -20,17 +20,19 @@ import rostopic_funcs
 app = Flask(__name__)
 app.secret_key = "9876t5rdkjh34ucdsyettursg(*&";
 
-NODE_NAME = 'webtopic'
-# rospy.init_node(NODE_NAME, anonymous=True, disable_signals=True)
+_NODE_NAME = 'webtopic'
+SUBS_NODE_NAME = '%s_subs' % _NODE_NAME
+PUB_NODE_NAME = '%s_pubs' % _NODE_NAME
 
 SVG_GENERATOR = generate_dotcode.Generator()
 
 # TODO delete as soon as a mutex is implemented at InterProcessTopicsInfo
 SUBSCRIBED_TOPICS_LOCK = threading.Lock()
 TOPICS_INFO_DICT = {}
+ACTIVE_PUBLISHERS = {}
 
 
-# TODO make_response is not being used properly
+# TODO Check if make_response is being used properly
 
 def generate_session_identifier():
     return str(str(time.time()) + str(random.random()))
@@ -42,7 +44,6 @@ def favicon():
                                'favicon.ico',
                                mimetype='image/vnd.microsoft.icon')
 
-
 def get_session_identifier():
     if 'user_id' not in session:
         session['user_id'] = generate_session_identifier()
@@ -52,13 +53,32 @@ def get_session_identifier():
 def get_topics_info(user_id):
     global TOPICS_INFO_DICT
     if user_id not in TOPICS_INFO_DICT:
-        global NODE_NAME
-        topic_info = rostopic_funcs.InterProcessTopicsInfo(NODE_NAME)
+        global SUBS_NODE_NAME
+        topic_info = rostopic_funcs.InterProcessTopicsInfo(SUBS_NODE_NAME)
         topic_info.daemon = True
         topic_info.start()
         TOPICS_INFO_DICT[user_id] = topic_info
     return TOPICS_INFO_DICT[user_id]
 
+def get_publisher_and_publish(user_id, *args, **kwargs):
+    global ACTIVE_PUBLISHERS
+    r = random.random()
+    if user_id not in ACTIVE_PUBLISHERS:
+        ACTIVE_PUBLISHERS[user_id] = dict()
+
+    while str(r) in ACTIVE_PUBLISHERS[user_id]:
+        r = random.random()
+    p = InterProcessPublisher(*args, **kwargs)
+    p.start()
+    ACTIVE_PUBLISHERS[user_id][r] = p
+    return p, r
+
+def remove_publisher(user_id, publisher_id):
+    global ACTIVE_PUBLISHERS
+    if publisher_id in ACTIVE_PUBLISHERS[user_id]:
+        del(ACTIVE_PUBLISHERS[user_id][publisher_id])
+        if not len(ACTIVE_PUBLISHERS[user_id]):
+            del(ACTIVE_PUBLISHERS[user_id])
 
 @app.route('/scroll')
 def scroll():
@@ -103,7 +123,6 @@ def get_mobile():
 
 
 # API
-
 @app.route('/get_msg_type')
 def get_msg_type():
     try:
@@ -136,7 +155,6 @@ def subscribe():
     return _topic_template_executer(topics_info.subscribe,
                                     lambda x: make_response(jsonify({})))
 
-
 @app.route('/unsubscribe')
 def unsubscribe():
     topics_info = get_topics_info(get_session_identifier())
@@ -149,7 +167,6 @@ def get_hz():
     topics_info = get_topics_info(get_session_identifier())
     return _topic_template_executer(topics_info.get_hz,
                                     lambda x: make_response(jsonify({'hz': x[0]})))
-
 
 @app.route('/get_bw')
 def get_bw():
@@ -190,7 +207,7 @@ def get_svg_topics_and_nodes():
     except KeyError as e:
         logging.exception(e)
         return make_response(jsonify(
-                {'error': 'You must specify svg_name'}))
+                {'error': 'You must specify svg_name'}), 400)
     try:
         topics, nodes = SVG_GENERATOR.get_svg_nodes_topics_lists(svg_name)
     except KeyError as e:
@@ -199,6 +216,49 @@ def get_svg_topics_and_nodes():
                 {'error': 'Svg not available'}))
     return make_response(jsonify(
             {'topics': topics, 'nodes': nodes} ))
+
+@app.route('publish')
+def publish():
+    try:
+        topic = request.args['topic']
+        msg = request.args['msg']
+        rate = float(request.args['rate'])
+    except KeyError as e:
+        logging.exception(e)
+        return make_respose(jsonify(
+            {'error': '"topic" and "msg" expected as args'}), 400)
+    except ValueError as e:
+        logging.exception(e)
+        return make_respose(jsonify(
+            {'error': 'rate must be numeric'}), 400)
+
+    try:
+        topic_type, msg_class, real_topic_name, msg_eval = (
+                rostopic_funcs.get_topic_info(topic))
+        if msg_class is None:
+            return make_respose(jsonify({'error': "Couldn't find msg_class"}),
+                                400)
+        pub, pub_id = get_publisher_and_publish(get_session_identifier(),
+                                                real_topic_name,
+                                                msg_class,
+                                                msg,
+                                                rate,
+                                                node_name=PUB_NODE_NAME)
+    except Exception as e:
+        logging.exception(e)
+        return make_respose(jsonify({'error': 'Internal Error'}), 500)
+
+    if rate == 0: #Wait until it's finished
+        try:
+            pub.wait_until_finish()
+        except Exception as e:
+            return make_respose(jsonify({'error': 'Internal Error'}), 500)
+
+        remove_publisher(get_session_identifier(), pub_id)
+        return make_respose(jsonify({'status': 'OK'}), 200)
+
+    return make_respose(jsonify({'status': 'OK',
+                                 'id': pub_id}), 200)
 
 #Utils
 def _topic_template_executer(func, parser):

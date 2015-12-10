@@ -4,6 +4,7 @@ import roslib
 import rosmsg
 import rospy
 import rostopic
+import std_msgs.msg
 
 from rqt_topic.topic_info import TopicInfo
 
@@ -41,8 +42,52 @@ class TopicsInfo():
         return self.topics[topic].get_hz()
 
 class InterProcessPublisher(multiprocessing.Process):
-    pass
+    def __init__(self, topic_name, msg_class, values, rate=0,
+                 node_name="interprocesspublisher"):
+        self.name = node_name
+        self.topic_name = topic_name
+        self.msg_class = msg_class
+        self.rate = rate
+        self.shutdown = False
+        self.msg = msg_class()
+        self._result_queue = multiprocessing.Queue()
+        fill_msg_from_dict(self.msg, values)
 
+    def _shutdown(self):
+        return self.shutdown()
+
+    def shutdown(self):
+        self.shutdown = True
+
+    def wait_until_finish(self):
+        ret = self._result_queue.get()
+        if isinstance(ret, Exception):
+            raise ret
+
+    def run(self):
+        try:
+            rospy.init_node(self.name, anonymous=True, disable_rosout=True,
+                            disable_rostime=True, disable_signals=True)
+            self.pub = rospy.Publisher(self.name, self.msg_class,
+                                       queue_size=100)
+
+            if self.rate == 0:
+                self.pub.publish(msg)
+            else:
+                r = rospy.Rate(self.rate)
+                while not rospy.is_shutdown() and not self._shutdown():
+                    self.pub.publish(msg)
+                    r.sleep()
+
+        except Exception as e:
+            self._result_queue.put(e)
+            raise
+        else:
+            self._result_queue.put("Finished")
+
+        finally:
+            print("Shutting down")
+            rospy.signal_shutdown("Shutting down")
 
 class InterProcessTopicsInfo(multiprocessing.Process):
     _GET_LAST_MSG = 'get_last_msg'
@@ -175,6 +220,16 @@ def get_msg_struct(msg_name):
         return
     return get_msg_struct_(msg_class, {})
 
+def fill_msg_from_dict(msg, d):
+    def is_msg(m):
+        return hasattr(m, '__slots__') and hasattr(msg, '_slot_types')
+
+    for k, v in d.items():
+        if is_msg(getattr(msg, k)):
+            fill_msg_from_dict(getattr(msg, k), v)
+        else:
+            setattr(msg, k, v)
+
 def get_msg_struct_(msg_class, ret):
     if hasattr(msg_class, '__slots__') and hasattr(msg_class, '_slot_types'):
         for slot_name, slot_type in zip(msg_class.__slots__,
@@ -189,7 +244,6 @@ def get_msg_struct_(msg_class, ret):
                 ret[slot_name] = slot_type
     else:
         #TODO test with arrays
-        print("ASDWQASD")
         base_type_str, arr_size = _extract_array_info(type_name)
     return ret
 
