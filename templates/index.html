@@ -34,8 +34,11 @@
                 $("#no_topic_selected_alert").html("No topic selected");
                 return;
             }
+		    console.log("sel_topic2 " + $.selected_topic);
             $("#no_topic_selected_alert").html("&nbsp;");
-            console.log("subscriptions: " + JSON.stringify($.subscriptions));
+            //console.log("subscriptions: " + JSON.stringify($.subscriptions));
+            var selected_topic = $.selected_topic
+            
             /* if there is no subscription to the topic, subscribe */
             if(!($.selected_topic in $.subscriptions)) {
                 $.ajax({
@@ -54,6 +57,7 @@
           }
 
           function open_echo_panel(topic_name) {
+            console.log("activate topic " + topic_name);
           	activate(topic_name);
           }
 
@@ -67,11 +71,11 @@
           }
           
           function addEchoedTopicToList(topic_name) {
-            echo($.selected_topic);
+		    console.log("sel_topic3 " + $.selected_topic);
             var item_name = "table_echoing"+ topic_name; 
             var newItem = "<table id=\""+ item_name +"\"><tr><td>" + 
-                          "<a role=\"button\" class=\"ui-link ui-btn ui-icon-delete ui-btn-icon-notext ui-shadow ui-corner-all\" href=\"#leftpanel\" data-role=\"button\" data-icon=\"delete\" data-mini=\"true\" data-inline=\"true\" data-iconpos=\"notext\" onclick=\"removeEchoedTopicFromList(this, '"+ topic_name +"');\"></a>" + 
-                           "</td><td>"+ topic_name +"</td></tr></table>";
+                          "<a role=\"button\" class=\"ui-link ui-btn ui-icon-delete ui-btn-icon-notext ui-shadow ui-corner-all\" href=\"#leftpanel\" data-role=\"button\" data-icon=\"delete\" data-mini=\"true\" data-inline=\"true\" data-iconpos=\"notext\" onclick=\"removeEchoedTopicFromList(this, '"+ topic_name +"');\"></<a>" + 
+                           "</td><td><button onclick=\"javascript:echo_topic_click('"+ topic_name +"')\">"+ topic_name +"</button></td></tr></table>";
             $("#echoing-collapsible").find(".ui-collapsible-content").append(newItem);
           }
           
@@ -93,6 +97,21 @@
 			});
             
           }
+          
+          function echo_topic_click(topic_name) {
+          
+            $.getJSON('/get_msg_type', {
+			      topic: [topic_name]
+			    }, function(data) {
+				    $.selected_topic = data.real_topic;
+				    console.log("sel_topic1 " + $.selected_topic);
+			      $('#topic_msg_type').html('Topic: ' + data.real_topic + '<br>Type: ' + data.topic_type);
+			      $("#echo_button").prop('disabled', false);
+			      echo_button_click()
+			      $("#rightpanel").panel("open");});
+			      
+			     
+		    }
         </script>
         
     </head>
