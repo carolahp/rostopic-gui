@@ -23,8 +23,8 @@ This software was initially developed as the main project in CC-5407 - "Software
 - Go to the directory where it was cloned.
 - Install the dependencies: `pip install -r requirements.txt`
 - Run it! `python webtopic.py`
-- Go to <localhost:5000> in your favourite browser and check it out.
-- It will also be available for all the devices in your local network, just go to <IP_PC_RUNNING_WEBTOPIC:5000>. 
+- Go to http://localhost:5000 in your favourite browser and check it out.
+- It will also be available for all the devices in your local network, just go to http://IP_PC_RUNNING_WEBTOPIC:5000 . 
 
 ## Contribute
 1. Fork it!
