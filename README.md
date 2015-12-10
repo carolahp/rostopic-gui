@@ -21,9 +21,10 @@ This software was initially developed as the main project in CC-5407 - "Software
 ## Install
 - Clone the repository: `git clone https://github.com/carolahp/rostopic-gui.git`
 - Go to the directory where it was cloned.
-- Install the dependencies: `pip -r requirements.txt`
+- Install the dependencies: `pip install -r requirements.txt`
 - Run it! `python webtopic.py`
-- Go to (localhost:5000) and check it out.
+- Go to <localhost:5000> in your favourite browser and check it out.
+- It will also be available for all the devices in your local network, just go to <IP_PC_RUNNING_WEBTOPIC:5000>. 
 
 ## Contribute
 1. Fork it!
