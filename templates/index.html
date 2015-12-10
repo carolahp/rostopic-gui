@@ -2,7 +2,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Nodes and topics</title>
+        <title>WebTopic</title>
         <link rel="stylesheet" href="{{url_for('static', filename='css/rostopic-web.min.css')}}" />
         <link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile.icons.min.css')}}" />
         <link rel="stylesheet" href="{{url_for('static', filename='css/jquery.mobile-1.4.5.css')}}" />
@@ -105,7 +105,7 @@
 			    }, function(data) {
 				    $.selected_topic = data.real_topic;
 				    console.log("sel_topic1 " + $.selected_topic);
-			      $('#topic_msg_type').html('Topic: ' + data.real_topic + '<br>Type: ' + data.topic_type);
+			      $('#topic_msg_type').html('Topic: <strong>' + data.real_topic + '</strong><br>Type: <strong>' + data.topic_type +'</strong>');
 			      $("#echo_button").prop('disabled', false);
 			      echo_button_click()
 			      $("#rightpanel").panel("open");});
@@ -118,13 +118,13 @@
     <body>
         <div data-role="page" data-theme="a">
             <div data-role="panel" id="leftpanel" data-display="overlay" >
-                <h2>Panel Header</h2>
+                <h2>Active topics</h2>
                 <div class="ui-grid-a" data-role="collapsible" id="publishing-collapsible">
                     <h4>Publishing</h4>
                     <!--<a href="#leftpanel" id="publishingtogglebutton" data-role="button" data-icon="arrow-d">Publishing</a>-->
                 </div>
                 <div class="ui-grid-a" data-role="collapsible" id="echoing-collapsible">
-                    <h4>Echoing</h4>
+                    <h4>Listening</h4>
                     <!--<a href="#leftpanel" id="publishingtogglebutton" data-role="button" data-icon="arrow-d">Echoing1</a>-->
                 </div>
             </div>
@@ -136,7 +136,7 @@
             <div data-role="header" data-position="inline">
                 <a href="#leftpanel" id="lpaneltogglebutton" data-role="button" data-icon="grid" data-mini="true" data-inline="true" data-iconpos="notext"></a>
 
-                <h1>Nodes and topics diagram</h1>
+                <h1>WebTopic</h1>
             </div>
             <div data-role="content" data-theme="a">
                 <div class="image-div"  style="text-align:center">

@@ -243,7 +243,7 @@ function generateClickFun(type, ros_name) {
     return function() {
         if(type === "node") {
             $.selected_topic = null;
-			$('#topic_msg_type').html('Node: ' + ros_name +'<br>&nbsp;');
+			$('#topic_msg_type').html('Node: <strong>' + ros_name +'</strong><br>&nbsp;');
 			$("#echo_button").prop('disabled', true);
         }
         else if(type === "topic") {
@@ -251,7 +251,8 @@ function generateClickFun(type, ros_name) {
 			      topic: [ros_name]
 			    }, function(data) {
 				    $.selected_topic = data.real_topic;
-			      $('#topic_msg_type').html('Topic: ' + data.real_topic + '<br>Type: ' + data.topic_type);
+			      $('#topic_msg_type').html('Topic: <strong>' + data.real_topic + '</strong><br>Type: <strong>' + data.topic_type + '</strong>');
+			      $("#no_topic_selected_alert").html("&nbsp");
 			      $("#echo_button").prop('disabled', false);});
         }
         else {

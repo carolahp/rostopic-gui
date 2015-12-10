@@ -1,8 +1,8 @@
 <script>
 var last_topic_name = "";
 function activate(topic_name) {
-    window.console.log("TREE INITIALIZED " + isRealValue($.jstree.reference('#data')));
-    window.console.log("DIFFERENT TOPIC " +  !(last_topic_name === topic_name));
+    //window.console.log("TREE INITIALIZED " + isRealValue($.jstree.reference('#data')));
+    //window.console.log("DIFFERENT TOPIC " +  !(last_topic_name === topic_name));
     if(!(last_topic_name === topic_name)) {
         // topic changed
         last_topic_name = topic_name;
@@ -29,7 +29,7 @@ function activate(topic_name) {
 	    $.interval_func = window.setInterval(function(){
 		    update(topic_name);
 		    }, 500);
-	    $("#echo_topic_title").html("Monitoring " + topic_name);
+	    $("#echo_topic_title").html("Listening to " + topic_name);
         
     }
 }
