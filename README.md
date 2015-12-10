@@ -38,4 +38,4 @@ This software was initially developed as the main project in CC-5407 - "Software
 * Francisco Montoto <fmontotomonroy@gmail.com>
 
 ## License
-TODO
+This software is distributed under the BSD license, see LICENSE.
