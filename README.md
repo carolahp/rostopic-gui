@@ -6,20 +6,35 @@ It's intended to help developers to see and interact with the messages going thr
 
 ## A little bit more about WebTopic
 ### How does it works?
-TODO
+It's pretty similar to rqt_graph and the topic_monitor plugin of rqt. Most of the core use the same or variations of the functions used there. The main difference is the interface, instead of using python qt interface we provide a HTML interface suitable for mobile devices and computers.
+
+[Flask] (http://flask.pocoo.org/) is being used as web framework and [Werkzeug] (http://werkzeug.pocoo.org/) as WebServer. 
 
 ### Why did you write it?
 This software was initially developed as the main project in CC-5407 - "Software Engineering for Robotics", a semestral course at the Faculty of Physical and Mathematical Sciences, Universidad de Chile. And was written trying to make the debug process of a moving robot easier.
 
-### Original authors
-* Carolina Hernández <ADD MAIL>
-* Francisco Montoto <fmontotomonroy@gmail.com>
+## Features
+* Graph with topic interactions.
+* Topic listening of the messages.
+* JSON-HTTP API to get topics information and/or to listen them.
 
 ## Install
-TODO
+- Clone the repository: `git clone https://github.com/carolahp/rostopic-gui.git`
+- Go to the directory where it was cloned.
+- Install the dependencies: `pip -r requirements.txt`
+- Run it! `python webtopic.py`
+- Go to (localhost:5000) and check it out.
 
 ## Contribute
-TODO
+1. Fork it!
+2. Create your feature branch: `git checkout -b my-new-feature`
+3. Commit your changes: `git commit -a -m 'Add my feature'`
+4. Push to the branch: `git push origin my-new-feature`
+5. Send us a pull request
+
+## Original authors
+* Carolina Hernández <cahernan@dcc.uchile.cl>
+* Francisco Montoto <fmontotomonroy@gmail.com>
 
 ## License
 TODO
