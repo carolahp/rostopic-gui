@@ -81,7 +81,7 @@ function getROSElementName(title, all_elements) {
         return possibleNames[i].replace(/\//g,"-");
         }
     }
-    console.error("edge associated with no topic");
+    //console.error("Element associated with no topic" + possibleNames);
     return false;
 }
 
@@ -114,7 +114,7 @@ function addClasses(svgDoc, all_topics, all_nodes) {
 		    if(! isTopicName ) {
 		        var isNodeName = getROSElementName(title, all_nodes);
 		        if(! isNodeName ) {
-		            console.error(title + " isn't topic nor node");
+		            //console.error(title + " isn't topic nor node");
 		            continue;
 		        }
 		        else {
@@ -125,6 +125,7 @@ function addClasses(svgDoc, all_topics, all_nodes) {
 		        className = "topic" + isTopicName;
 		    }
 		}
+
 	    var gChildren = [];
         var polygons = elemG.find("polygon");	
         //console.log("length polygons " +  polygons.length);
@@ -178,12 +179,14 @@ function addListeners(svgDoc) {
 		/* iterate polygons and paths found in G */
 		for(var j = 0; j < gChildren.length; j++) {
 		    var child = $(gChildren[j]);
-		    console.log(child);
-		    console.log(child.attr("class"));
+		    //console.log(child);
+		    //console.log(child.attr("class"));
 		    var addListener = function(child_param, class_name_param) {
 		        var class_name_copy = class_name_param;
-		        if(class_name_copy === "" || class_name_copy === null) return;
-		        console.log(class_name_copy);
+		        if(! class_name_copy) {
+    		        //to exclude rosout_agg
+    		        return;
+    		    }
     		    
 		        var jclass = '.' + class_name_param;
 	            //console.log("jclass final " + jclass);
@@ -203,37 +206,61 @@ function addListeners(svgDoc) {
                         generateStrokeFun(obj, "off")();
                     });
     		    });
-    		    
     		    var topicName = getTopicFromClass(class_name_copy);
-    		    
+    		    var nodeName = getNodeFromClass(class_name_copy);
     		    if(topicName) {
     		        child_param.click(function() {
-		            	generateClickFun(topicName)();
+		            	generateClickFun("topic", topicName)();
     		        });
+    		    }
+    		    else if(nodeName){
+    		        child_param.click(function() {
+		            	generateClickFun("node", nodeName)();
+    		        });
+    		    }
+    		    else {
+    		        console.error("element isnt topic nor node, and click handler wasn't added");
     		    }
 		    }
 		    addListener(child, child.attr("class"));
-		    
 		}
 	}
 }
 
 function getTopicFromClass(class_name) {
-    if(class_name.indexOf("node-") > -1) {
+    if(class_name.indexOf("topic-") < 0) {
         return false;
     }
     return "/" + class_name.substring(6, class_name.length).replace(/-/g,"/");
 }
-
-function generateClickFun(topic_name) {
+function getNodeFromClass(class_name) {
+    if(class_name.indexOf("node-") < 0) {
+        return false;
+    }
+    return "/" + class_name.substring(5, class_name.length).replace(/-/g,"/");
+}
+function generateClickFun(type, ros_name) {
     return function() {
-        $.getJSON('/get_msg_type', {
-			      topic: [topic_name]
+        if(type === "node") {
+            $.selected_topic = null;
+			$('#topic_msg_type').html('Node: ' + ros_name +'<br>&nbsp;');
+			$("#echo_button").prop('disabled', true);
+        }
+        else if(type === "topic") {
+            $.getJSON('/get_msg_type', {
+			      topic: [ros_name]
 			    }, function(data) {
 				    $.selected_topic = data.real_topic;
 			      $('#topic_msg_type').html('Topic: ' + data.real_topic + '<br>Type: ' + data.topic_type);
-    });
-    }
+			      $("#echo_button").prop('disabled', false);});
+        }
+        else {
+            $("#echo_button").prop('disabled', true);
+            console.error("click handler added nor a topic neither a node");
+        }
+        
+    };
+    
 }
 
 function generateStrokeFun(elem, new_state) {

@@ -31,8 +31,10 @@
           function echo_button_click(){
             if(!isRealValue($.selected_topic)) {
                 console.log("no topic selected");
+                $("#no_topic_selected_alert").html("No topic selected");
                 return;
             }
+            $("#no_topic_selected_alert").html("&nbsp;");
             console.log("subscriptions: " + JSON.stringify($.subscriptions));
             /* if there is no subscription to the topic, subscribe */
             if(!($.selected_topic in $.subscriptions)) {
@@ -65,6 +67,7 @@
           }
           
           function addEchoedTopicToList(topic_name) {
+            echo($.selected_topic);
             var item_name = "table_echoing"+ topic_name; 
             var newItem = "<table id=\""+ item_name +"\"><tr><td>" + 
                           "<a role=\"button\" class=\"ui-link ui-btn ui-icon-delete ui-btn-icon-notext ui-shadow ui-corner-all\" href=\"#leftpanel\" data-role=\"button\" data-icon=\"delete\" data-mini=\"true\" data-inline=\"true\" data-iconpos=\"notext\" onclick=\"removeEchoedTopicFromList(this, '"+ topic_name +"');\"></a>" + 
@@ -131,10 +134,11 @@
             </div>
             <div data-role="footer" data-position="inline">
                 Echo:
-                <a onClick="echo_button_click();" href="#rightpanel" data-role="button" data-icon="audio" data-mini="true" data-inline="true" data-iconpos="notext"></a>
+                <a id="echo_button" disabled onClick="echo_button_click();" href="#rightpanel" data-role="button" data-icon="audio" data-mini="true" data-inline="true" data-iconpos="notext"></a>
                 Publish:
-                <a onClick="publish_button_click();" href="#" data-role="button" data-icon="edit" data-mini="true" data-inline="true" data-iconpos="notext"></a>
+                <a disabled id="publish_button" onClick="publish_button_click();" href="#" data-role="button" data-icon="edit" data-mini="true" data-inline="true" data-iconpos="notext"></a>
             </div>
+            <div><p id='no_topic_selected_alert' style='color:red'>&nbsp;</p></div>
         </div>
     </body>
 </html>
